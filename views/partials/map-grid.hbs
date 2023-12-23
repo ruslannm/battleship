@@ -1,0 +1,36 @@
+<div class='container' style='max-width: 500px;'>
+  {{#each map}}
+    <div class='row'>
+      {{#each this.row}}
+        {{#if this.isButton}}
+          <div class='col-1 border border-white mrn-cell'>
+            <input
+              type='checkbox'
+              class='btn-check'
+              id='btn-check-outlined_{{this.id}}'
+              autocomplete='off'
+              {{#if this.isDisabled}}
+              disabled
+              {{/if}}
+            />
+            <label
+              class='btn btn-outline-primary rounded-0'
+              for='btn-check-outlined_{{this.id}}'
+              {{! disabled }}
+            ></label>
+          </div>
+
+        {{else}}
+          <div
+            class='col-1 border border-white mrn-cell d-flex flex-column justify-content-center'
+          >
+            <div class='my-axis align-self-center'>
+              {{this.text}}
+            </div>
+          </div>
+        {{/if}}
+      {{/each}}
+    </div>
+  {{/each}}
+
+</div>

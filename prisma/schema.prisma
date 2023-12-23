@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int     @id @default(autoincrement())
+  name            String
+  games           Game[]
+  role            String
+  username        String  @unique
+  password        String
+  refreshToken    String?
+  countGameTotal  Int     @default(0)
+  countGameWinner Int     @default(0)
+}
+
+model Game {
+  id       Int     @id @default(autoincrement())
+  isActive Boolean @default(true)
+  mapUser  String
+  mapBot   String
+  rules    Rule[]  @relation("RulesInGames")
+  User     User    @relation(fields: [userId], references: [id])
+  userId   Int
+  Log      Log[]
+}
+
+model Log {
+  id          Int    @id @default(autoincrement())
+  Game        Game   @relation(fields: [gameId], references: [id])
+  gameId      Int
+  description String
+}
+
+model Sheep {
+  id     Int    @id @default(autoincrement())
+  name   String
+  length Int
+  Rule   Rule[]
+}
+
+model Rule {
+  id      Int    @id @default(autoincrement())
+  Sheep   Sheep  @relation(fields: [sheepId], references: [id])
+  sheepId Int
+  games   Game[] @relation("RulesInGames")
+}

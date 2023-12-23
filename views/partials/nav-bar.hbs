@@ -1,0 +1,39 @@
+<nav class='navbar navbar-expand navbar-light bg-light'>
+  <div class='container-fluid'>
+    <ul class='navbar-nav'>
+      {{#if isAuth}}
+
+        <li class='nav-item'>
+          <a class='nav-link active' aria-current='page' href='/'>Home</a>
+        </li>
+      {{/if}}
+      {{#if isAuth}}
+        {{#unless isAdmin}}
+          <li class='nav-item'>
+            <a class='nav-link' href='/orders'>Create order</a>
+          </li>
+        {{/unless}}
+      {{/if}}
+      <li class='nav-item'>
+        <a class='nav-link' href='/menu'>Menu</a>
+      </li>
+    </ul>
+  </div>
+  <div class='text-end'>
+    <ul class='navbar-nav px-3'>
+      {{#unless isAuth}}
+        <li class='nav-item'>
+          <a class='nav-link' href='/signup'>Register</a>
+        </li>
+        <li class='nav-item'>
+          <a class='nav-link' href='/signin'>Login</a>
+        </li>
+      {{/unless}}
+      {{#if isAuth}}
+        <li class='nav-item'>
+          <a class='nav-link' href='/signout'>Logout</a>
+        </li>
+      {{/if}}
+    </ul>
+  </div>
+</nav>

@@ -1,0 +1,22 @@
+<div class='container m-3' style='max-width: 500px;'>
+    <select
+      id='menu-select'
+      class='form-control my-5'
+      {{!-- multiple='multiple' --}}
+      aria-label='Multiple select example'
+      name='items[]'
+      required
+      size="10"
+    >
+      <option value='' disabled>Выбери корабль</option>
+      {{#each rules}}
+        <option class='rule-item' value='{{this.id}}'>{{this.Sheep.name}},
+          {{this.Sheep.length}}</option>
+      {{/each}}
+
+    </select>
+</div>
+{{> map-grid }}
+{{!-- <div class='container m-3'>
+    {{> map-grid }}
+</div> --}}
