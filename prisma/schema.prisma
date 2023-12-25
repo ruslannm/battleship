@@ -23,14 +23,16 @@ model User {
 }
 
 model Game {
-  id       Int     @id @default(autoincrement())
-  isActive Boolean @default(true)
-  mapUser  String
-  mapBot   String
-  rules    Rule[]  @relation("RulesInGames")
-  User     User    @relation(fields: [userId], references: [id])
-  userId   Int
-  Log      Log[]
+  id           Int     @id @default(autoincrement())
+  isActive     Boolean @default(true)
+  mapUserStart String
+  mapUser      String
+  mapBotStart  String
+  mapBot       String
+  rules        Rule[]
+  User         User    @relation(fields: [userId], references: [id])
+  userId       Int
+  Log          Log[]
 }
 
 model Log {
@@ -44,12 +46,12 @@ model Sheep {
   id     Int    @id @default(autoincrement())
   name   String
   length Int
-  Rule   Rule[]
+  rules  Rule[]
 }
 
 model Rule {
   id      Int    @id @default(autoincrement())
   Sheep   Sheep  @relation(fields: [sheepId], references: [id])
   sheepId Int
-  games   Game[] @relation("RulesInGames")
+  games   Game[]
 }

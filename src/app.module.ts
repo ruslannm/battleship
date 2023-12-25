@@ -13,11 +13,22 @@ import { AuthController } from './auth/auth.controller';
 import { ForbiddenExceptionFilter } from './filters/forbidden.filter';
 import { MapController } from './map/map.controller';
 import { RuleService } from './rule/rule.service';
+import { MapService } from './map/map.service';
+import { GameController } from './game/game.controller';
+import { GameService } from './game/game.service';
 
 @Module({
   imports: [PrismaModule, AuthModule],
-  controllers: [MapController, UserController, AppController, AuthController],
+  controllers: [
+    MapController,
+    UserController,
+    AppController,
+    AuthController,
+    GameController,
+  ],
   providers: [
+    GameService,
+    MapService,
     RuleService,
     UserService,
     ConfigService,
