@@ -77,22 +77,23 @@ export class MapService {
 
   private getCellText(row: number, column: number): string {
     if (
-      column === 0 ||
-      (column === 1 && row === 0) ||
-      (column > 1 && row > 0)
+      // column === 0 ||
+      // (column === 1 && row === 0) ||
+      column > 0 &&
+      row > 0
     ) {
-      return ' ';
+      return '';
     }
     if (row == 0) {
-      return 'ABCDEFGHKL'.charAt(column - 2);
+      return 'ABCDEFGHKL'.charAt(column - 1);
     }
-    if (column == 1) {
+    if (column == 0) {
       return [...Array(10).keys()]
         .map((i) => i + 1)
         .at(row - 1)
         .toString();
     }
-    return ' ';
+    return '';
   }
 
   private getCellProps(
@@ -100,7 +101,7 @@ export class MapService {
     column: number,
     cellValue: string,
   ): { isButton: boolean; isDisabled: boolean } {
-    if (column < 2 || row < 1) {
+    if (column < 1 || row < 1) {
       return { isButton: false, isDisabled: true };
     }
     if (cellValue === '-') {
@@ -113,14 +114,14 @@ export class MapService {
   }
 
   private getCellIdx(rowIdx: number, columnIdx: number) {
-    return rowIdx * 12 + columnIdx;
+    return rowIdx * 11 + columnIdx;
   }
 
   getMapForRender(mapStart: string, mapCurrent: string, isUserMap: boolean) {
     const result = [];
     for (let rowIdx: number = 0; rowIdx < 11; rowIdx++) {
       const row = [];
-      for (let columnIdx = 0; columnIdx < 12; columnIdx++) {
+      for (let columnIdx = 0; columnIdx < 11; columnIdx++) {
         const id = this.getCellIdx(rowIdx, columnIdx);
         const text = this.getCellText(rowIdx, columnIdx);
         const { isButton, isDisabled } = this.getCellProps(

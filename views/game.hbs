@@ -1,0 +1,29 @@
+<div class='container m-3'>
+  <form class="row">
+    <div class="col-12 col-sm-4 col-lg-2 text-center">
+      <div class="h6">Выбери корабль, поставь на поле</div>
+      <select
+        id='menu-select'
+        class='form-control'
+        {{!-- multiple='multiple' --}}
+        aria-label='Multiple select example'
+        name='items[]'
+        required
+        size="10"
+      >
+        {{#each rules}}
+          <option class='rule-item' value='{{this.id}}'>{{this.Sheep.name}},
+            {{this.Sheep.length}} кл.</option>
+        {{/each}}
+
+      </select>
+      <button type='submit' class='btn btn-primary mt-2'>Применить</button>
+    </div>
+    <div class="col-12 col-sm-8 col-lg-10">
+      {{> map-grid mapUser }}
+    </div>
+  </form>
+</div>
+{{!-- <div class='container m-3'>
+    {{> map-grid }}
+</div> --}}

@@ -109,9 +109,9 @@ export class GameController {
     //     ],
     //   },
     // ];
-    res.render('map', {
+    res.render('game', {
       rules,
-      map: mapUser,
+      mapUser: { map: mapUser },
       isAuth: true,
     });
   }
