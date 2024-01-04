@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Game } from '@prisma/client';
 import { RuleService } from 'src/rule/rule.service';
+import { MapUserStartUpdateDto } from 'src/map/dto/map.dto';
 
 const defaultMap = '0'.repeat(12 * 11);
+const defaultStatus = 'placement';
 
 @Injectable()
 export class GameService {
@@ -52,6 +54,7 @@ export class GameService {
     const result = await this.prisma.game.create({
       data: {
         userId,
+        status: defaultStatus,
         isActive: true,
         mapUserStart: defaultMap,
         mapUser: defaultMap,
@@ -67,11 +70,41 @@ export class GameService {
     return result;
   }
 
-  async getGameId(userId: number) {
+  async getGameByUserId(userId: number) {
     const game = await this.findByUserId(userId);
     if (game) {
-      return game.id;
+      return game;
     }
-    return (await this.create(userId)).id;
+    return await this.create(userId);
+  }
+
+  async update(id: number, data: MapUserStartUpdateDto) {
+    try {
+      const result = await this.prisma.game.update({
+        where: { id },
+        data: {
+          ...data,
+          Log: {
+            create: { description: 'set sheep' },
+          },
+        },
+        include: {
+          Log: true,
+          rules: {
+            select: {
+              Sheep: {
+                select: {
+                  name: true,
+                  length: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      return result;
+    } catch {
+      throw new BadRequestException('Foreign key constraint failed');
+    }
   }
 }

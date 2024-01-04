@@ -44,13 +44,14 @@ export class GameController {
     id: number,
   ) {
     const user = req.user as UserValidatedDto;
-    console.log('user', user, 'id', id);
+    // console.log('user', user, 'id', id);
 
     const game = await this.gameService.find({ id, userId: user.id });
     if (!game) {
-      res.redirect('/');
+      res.render('not-found', { isAuth: true });
+      return;
     }
-    console.log('game', game);
+    // console.log('game', game);
 
     const mapUser = this.mapService.getMapForRender(
       game.mapUserStart,
@@ -118,18 +119,19 @@ export class GameController {
 
   @Post('')
   async post(@Req() req: Request, @Res() res: Response): Promise<void> {
-    console.log('POST -');
     const user = req.user as UserValidatedDto;
     const isAdmin = user.role === 'admin';
     if (isAdmin) {
       res.redirect('/');
     } else {
-      console.log('POST');
-
       // const player = await this.userService.findById(user.id);
-      const gameId = await this.gameService.getGameId(user.id);
-      console.log('gameId', gameId);
-      res.redirect(`game/${gameId}`);
+      const game = await this.gameService.getGameByUserId(user.id);
+      console.log('game', game);
+      if (game.status === 'placement') {
+        res.redirect(`/map`);
+      } else {
+        res.redirect(`/game/${game.id}`);
+      }
     }
   }
 }

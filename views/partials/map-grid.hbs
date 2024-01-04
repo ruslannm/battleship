@@ -4,30 +4,56 @@
       {{#each this.row}}
         {{#if this.isButton}}
           <div class='col-1 border border-white mrn-cell'>
-            <input
-              type='checkbox'
-              class='btn-check'
-              id='btn-check-outlined_{{this.id}}'
-              autocomplete='off'
-              {{#if this.isDisabled}}
-              disabled
-              {{/if}}
-            />
-            <label
-              class='btn btn-outline-primary rounded-0'
-              for='btn-check-outlined_{{this.id}}'
-              {{! disabled }}
-            ></label>
+            {{#if this.isDisabled}}
+              <input
+                type='checkbox'
+                class='btn-check'
+                id='btn-check-outlined_{{this.id}}'
+                autocomplete='off'
+                name='cells'
+                value='{{this.id}}'
+                disabled
+              />
+              <label
+                class='btn btn-outline-primary rounded-0'
+                for='btn-check-outlined_{{this.id}}'
+                disabled
+              ></label>
+            {{else}}
+              <input
+                type='checkbox'
+                class='btn-check'
+                id='btn-check-outlined_{{this.id}}'
+                autocomplete='off'
+                name='cells'
+                value='{{this.id}}'
+              />
+              <label
+                class='btn btn-outline-primary rounded-0'
+                for='btn-check-outlined_{{this.id}}'
+              ></label>
+            {{/if}}
           </div>
 
         {{else}}
-          <div
-            class='col-1 border border-white mrn-cell d-flex flex-column justify-content-center'
-          >
-            <div class='my-axis align-self-center'>
-              {{this.text}}
+          {{#if this.isAxis}}
+            <div
+              class='col-1 border border-white mrn-cell d-flex flex-column justify-content-center'
+            >
+              <div class='my-axis align-self-center'>
+                {{this.text}}
+              </div>
             </div>
-          </div>
+          {{else}}
+            <div
+              class='col-1 border border-white mrn-cell d-flex flex-column justify-content-center bg-primary'
+            >
+              <div class='my-sheep align-self-center text-white'>
+                {{this.text}}
+              </div>
+            </div>
+
+          {{/if}}
         {{/if}}
       {{/each}}
     </div>
