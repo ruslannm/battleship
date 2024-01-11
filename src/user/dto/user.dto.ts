@@ -11,7 +11,6 @@ export class UserSigninDto {
 
 export class UserValidatedDto {
   id: number;
-  name: string;
   role: string;
   username: string;
 }
@@ -19,31 +18,10 @@ export class UserValidatedDto {
 export class UserCreateDto extends UserSigninDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
-  @IsString()
-  @IsNotEmpty()
   role: string;
-  // @IsString()
-  // @IsNotEmpty()
-  // username: string;
-  // @IsString()
-  // @IsNotEmpty()
-  // password: string;
 }
 
 export class UserSignupDto extends UserCreateDto {
-  // @IsString()
-  // @IsNotEmpty()
-  // name: string;
-  // @IsString()
-  // @IsNotEmpty()
-  // role: string;
-  // @IsString()
-  // @IsNotEmpty()
-  // username: string;
-  // @IsString()
-  // @IsNotEmpty()
-  // password: string;
   @IsString()
   @IsNotEmpty()
   passwordConfirm: string;

@@ -11,48 +11,77 @@ datasource db {
 }
 
 model User {
-  id              Int     @id @default(autoincrement())
-  name            String
-  games           Game[]
-  role            String
-  username        String  @unique
-  password        String
-  refreshToken    String?
-  countGameTotal  Int     @default(0)
-  countGameWinner Int     @default(0)
+  id           Int         @id @default(autoincrement())
+  role         String      @default("player")
+  username     String      @unique
+  password     String
+  refreshToken String?
+  Game         Game[]
+  Placement    Placement[]
+  Log          Log[]
+
+  @@map("users")
 }
 
 model Game {
-  id           Int     @id @default(autoincrement())
-  status       String
-  isActive     Boolean @default(true)
-  mapUserStart String
-  mapUser      String
-  mapBotStart  String
-  mapBot       String
-  rules        Rule[]
-  User         User    @relation(fields: [userId], references: [id])
-  userId       Int
-  Log          Log[]
+  id         Int         @id @default(autoincrement())
+  stage      String      @default("placement")
+  User       User        @relation(fields: [userId], references: [id])
+  userId     Int         @map("user_id")
+  logs       Log[]
+  placements Placement[]
+
+  @@map("games")
 }
 
 model Log {
-  id          Int    @id @default(autoincrement())
-  Game        Game   @relation(fields: [gameId], references: [id])
-  gameId      Int
-  description String
+  id     Int  @id @default(autoincrement())
+  Game   Game @relation(fields: [gameId], references: [id])
+  gameId Int  @map("game_id")
+  User   User @relation(fields: [userId], references: [id])
+  userId Int  @map("user_id")
+  cell   Int  @default(-1)
+
+  @@map("logs")
 }
 
 model Sheep {
-  id     Int    @id @default(autoincrement())
-  name   String
-  length Int
-  rules  Rule[]
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
+  length    Int
+  Rule      Rule[]
+  Placement Placement[]
+
+  @@map("sheeps")
 }
 
 model Rule {
-  id      Int    @id @default(autoincrement())
-  Sheep   Sheep  @relation(fields: [sheepId], references: [id])
-  sheepId Int
-  games   Game[]
+  id       Int   @id @default(autoincrement())
+  Sheep    Sheep @relation(fields: [sheepId], references: [id])
+  sheepId  Int   @map("sheep_id")
+  quantity Int
+
+  @@map("rules")
+}
+
+model Placement {
+  id           Int            @id @default(autoincrement())
+  Game         Game           @relation(fields: [gameId], references: [id])
+  gameId       Int            @map("game_id")
+  Sheep        Sheep          @relation(fields: [sheepId], references: [id])
+  sheepId      Int            @map("sheep_id")
+  User         User           @relation(fields: [userId], references: [id])
+  userId       Int            @map("user_id")
+  PlacementLog PlacementLog[]
+
+  @@map("placement")
+}
+
+model PlacementLog {
+  id          Int       @id @default(autoincrement())
+  Placement   Placement @relation(fields: [placementId], references: [id])
+  placementId Int       @map("placement_id")
+  cell        Int       @default(-1)
+
+  @@map("placement_logs")
 }

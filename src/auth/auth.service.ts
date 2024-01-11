@@ -19,7 +19,7 @@ export class AuthService {
   ) { }
 
   async signup(body: UserSignupDto) {
-    const { name, role, username, password, passwordConfirm } = body;
+    const { role, username, password, passwordConfirm } = body;
     if (password !== passwordConfirm) {
       throw new BadRequestException('isPasswordError');
     }
@@ -28,7 +28,6 @@ export class AuthService {
       throw new BadRequestException('isUsernameNotUnique');
     }
     const user = await this.userService.create({
-      name,
       role,
       username,
       password,

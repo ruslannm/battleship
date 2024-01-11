@@ -1,0 +1,52 @@
+<div class='container m-3'>
+  <form id="map-placement" class="row requires-validation" novalidate action='/placement' , method='post'>
+    <div class='col-8 col-sm-5 col-md-4 col-lg-3 d-flex flex-column'>
+      {{!-- <div class="h6">Выбери корабль, поставь на поле</div> --}}
+        <div class="card">
+   <div class="card-body">
+    <h5 class="card-header">Корабли</h5>
+        
+        {{#each availableShips}}
+          <div class='form-check'>
+              <input
+                class='form-check-input'
+                type='radio'
+                name='sheepId'
+                id='{{this.sheepId}}'
+                value='{{this.sheepId}}'
+                required
+              />
+            <label class='form-check-label' for='{{this.sheepId}}' data-bs-toggle="tooltip" data-bs-placement="right" title="Доступно {{this.quantity}} шт">
+              {{this.name}},  {{this.length}} кл. <span class="badge bg-primary">{{this.quantity}} шт</span>
+            </label>
+          </div>
+
+        {{/each}}
+
+        <p class="text-danger" id="rule-invalid-message" style="display:none">
+          Выбери корабль!
+        </p>
+        </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-7 col-md-8 col-lg-5 mb-2">
+      {{> map-grid }}
+        <p class="text-danger" id="cells-invalid-message" style="display:none">
+          Размести на карте!
+        </p>
+        <div class="d-flex justify-content-start">
+        <button id = "reset-map" type='button' class='btn btn-warning mt-2 ms-5' 
+        value="{{gameId}}" {{#if isResetDisabled}} disabled {{/if}}
+        >Стереть карту</button>
+        <button id = "submit-map" type='submit' class='btn btn-success mt-2 ms-2' value="{{gameId}}">
+          {{submitText}}
+          </button>
+        </div>
+    </div>
+    <div class="col-8 col-sm-6 col-md-5 col-lg-4">
+        {{> log }}
+    </div>
+  
+  </form>
+</div>
+<script type='text/javascript' src='/js/placement.js'></script>

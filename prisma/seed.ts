@@ -7,7 +7,6 @@ const salt = Number(process.env.PASSWORD_SALT);
 
 type user = {
   id: number;
-  name: string;
   role: string;
   username: string;
   password: string;
@@ -15,22 +14,25 @@ type user = {
 
 const dataUsers: user[] = [
   {
+    id: 0,
+    role: 'bot',
+    username: 'bot',
+    password: 'bot',
+  },
+  {
     id: 1,
-    name: 'Alice',
     role: 'admin',
     username: 'Alice',
     password: bcrypt.hashSync('Alice', salt),
   },
   {
     id: 2,
-    name: 'Bob',
     role: 'player',
     username: 'Bob',
     password: bcrypt.hashSync('Bob', salt),
   },
   {
     id: 3,
-    name: 'John',
     role: 'player',
     username: 'John',
     password: bcrypt.hashSync('John', salt),
@@ -69,48 +71,29 @@ const dataSheeps: sheep[] = [
 type rule = {
   id: number;
   sheepId: number;
+  quantity: number;
 };
 
 const rules: rule[] = [
   {
     id: 1,
     sheepId: 1,
+    quantity: 1,
   },
   {
     id: 2,
     sheepId: 2,
+    quantity: 2,
   },
   {
     id: 3,
-    sheepId: 2,
+    sheepId: 3,
+    quantity: 3,
   },
   {
     id: 4,
-    sheepId: 3,
-  },
-  {
-    id: 5,
-    sheepId: 3,
-  },
-  {
-    id: 6,
-    sheepId: 3,
-  },
-  {
-    id: 7,
     sheepId: 4,
-  },
-  {
-    id: 8,
-    sheepId: 4,
-  },
-  {
-    id: 9,
-    sheepId: 4,
-  },
-  {
-    id: 10,
-    sheepId: 4,
+    quantity: 4,
   },
 ];
 

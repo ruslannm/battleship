@@ -11,7 +11,7 @@ export class BadRequestExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const res = ctx.getResponse();
     const req = ctx.getRequest();
-    const { name, role, username } = req.body;
+    const { role, username } = req.body;
     const message = exception.message;
 
     if (['isPasswordError', 'isUsernameNotUnique'].includes(message)) {

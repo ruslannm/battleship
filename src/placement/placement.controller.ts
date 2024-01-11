@@ -21,16 +21,16 @@ import { Response, Request } from 'express';
 import { AccessJwtGuard } from 'src/auth/access-jwt.guard';
 import { UserValidatedDto } from 'src/user/dto/user.dto';
 import { GameService } from 'src/game/game.service';
-import { MapService } from './map.service';
-import { MapDto } from 'src/map/dto/map.dto';
+import { PlacementService } from './placement.service';
+import { PlacementDto } from 'src/placement/dto/placement.dto';
 
 @UseGuards(AccessJwtGuard)
-@Controller('map')
+@Controller('placement')
 export class MapController {
   constructor(
     private readonly gameService: GameService,
     private readonly ruleService: RuleService,
-    private readonly mapService: MapService,
+    private readonly mapService: PlacementService,
   ) { }
 
   @Get()
@@ -38,24 +38,51 @@ export class MapController {
     const user = req.user as UserValidatedDto;
     // console.log('user', user, 'id', id);
 
+    const rules = await this.ruleService.findMany();
+    // console.log('rules', rules);
+    const fleetBot = rules.map((item) => {
+      return { sheepId: item.sheepId, quantity: item.quantity };
+    });
+    console.log('fleetBot', fleetBot);
     const game = await this.gameService.getGameByUserId(user.id);
     // console.log('game/ / map', game);
-    if (!game) {
+    // { id: 1, stage: 'placement', userId: 2, logs: [] }
+    if (!game || !(game.stage === 'placement')) {
       res.render('not-found', { isAuth: true });
       return;
     }
+    const placement = await this.mapService.getPlacementForRender(
+      game.id,
+      user.id,
+    );
+
+    const availableShips = await this.mapService.getAvailableShips(
+      game.id,
+      user.id,
+    );
+
+    // console.log('2 game/ / map', placement[1]['row']);
     // console.log('2 game/ / map', game);
     // const user = req.user as UserValidatedDto;
-    const rules = await this.ruleService.findMany();
+    // const { unusedRules, gameRules } = { unusedRules: null, gameRules: null };
+    // await this.ruleService.getRenderedGameRules(game.rules);
+    // const rulesGame = game.rules;
+    // console.log('rules/ rulesGame', rules);
+
     // console.log(rules);
-    const map = await this.mapService.getMapForRender(
-      game.mapUserStart,
-      game.mapUser,
-      true,
-    );
-    res.render('map', {
-      rules,
-      map,
+    // const map = await this.mapService.getMapForRender(
+    //   game.mapUserStart,
+    //   game.mapUser,
+    //   true,
+    // );
+    res.render('placement', {
+      gameId: game.id,
+      availableShips,
+      // isSubmitDisabled: unusedRules.length === 0,
+      // submitText: unusedRules.length === 0 ? 'Начать игру' : 'Применить',
+      // isResetDisabled: game.status !== defaultStatus,
+      Log: game.logs.slice(-10),
+      map: placement,
       isAuth: true,
     });
   }
@@ -64,25 +91,24 @@ export class MapController {
   async post(
     @Req() req: Request,
     @Res() res: Response,
-    @Body() dto: MapDto,
+    @Body() dto: PlacementDto,
   ): Promise<void> {
-    // console.log('dto', dto);
+    // const dto = req.body;
+    console.log('dto', dto);
     const user = req.user as UserValidatedDto;
     const isAdmin = user.role === 'admin';
     if (isAdmin) {
       res.redirect('/');
     } else {
       // console.log('body', req.body);
-      const { rule, cells } = dto;
-      if (typeof cells === 'string') {
-      }
-      console.log('ruleItem. cells', rule, cells, typeof cells);
+
+      // console.log('ruleItem. cells', rule, cells, typeof cells);
       // const player = await this.userService.findById(user.id);
       const game = await this.gameService.getGameByUserId(user.id);
-      const newGame = await this.mapService.placeShip(game.id, dto);
-      console.log('newGame', newGame);
-      if (newGame) {
-        res.redirect(`/map`);
+      const placement = await this.mapService.placeShip(game.id, user.id, dto);
+      // console.log('newGame', newGame);
+      if (placement) {
+        res.redirect(`/placement`);
       } else {
         res.redirect(`/#game-rules`);
       }

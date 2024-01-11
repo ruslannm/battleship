@@ -11,9 +11,9 @@ import { ConfigService } from '@nestjs/config';
 import { BadRequestExceptionFilter } from './filters/bad-request.filter';
 import { AuthController } from './auth/auth.controller';
 import { ForbiddenExceptionFilter } from './filters/forbidden.filter';
-import { MapController } from './map/map.controller';
+import { MapController } from './placement/placement.controller';
 import { RuleService } from './rule/rule.service';
-import { MapService } from './map/map.service';
+import { PlacementService } from './placement/placement.service';
 import { GameController } from './game/game.controller';
 import { GameService } from './game/game.service';
 
@@ -28,7 +28,7 @@ import { GameService } from './game/game.service';
   ],
   providers: [
     GameService,
-    MapService,
+    PlacementService,
     RuleService,
     UserService,
     ConfigService,
