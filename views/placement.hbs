@@ -11,12 +11,12 @@
               <input
                 class='form-check-input'
                 type='radio'
-                name='sheepId'
-                id='{{this.sheepId}}'
-                value='{{this.sheepId}}'
+                name='shipId'
+                id='{{this.shipId}}'
+                value='{{this.shipId}}'
                 required
               />
-            <label class='form-check-label' for='{{this.sheepId}}' data-bs-toggle="tooltip" data-bs-placement="right" title="Доступно {{this.quantity}} шт">
+            <label class='form-check-label' for='{{this.shipId}}' data-bs-toggle="tooltip" data-bs-placement="right" title="Доступно {{this.quantity}} шт">
               {{this.name}},  {{this.length}} кл. <span class="badge bg-primary">{{this.quantity}} шт</span>
             </label>
           </div>
@@ -43,10 +43,7 @@
           </button>
         </div>
     </div>
-    <div class="col-8 col-sm-6 col-md-5 col-lg-4">
-        {{> log }}
-    </div>
-  
+ 
   </form>
 </div>
 <script type='text/javascript' src='/js/placement.js'></script>

@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RuleService } from 'src/rule/rule.service';
 import { PlacementDto } from './dto/placement.dto';
-import { GameService } from 'src/game/game.service';
+// import { GameService } from 'src/game/game.service';
 import { columnsLegend, rowsLegend } from 'src/constants';
 
-type takenCell = {
+type appliedCell = {
   cell: number;
   length: number;
 };
@@ -14,14 +14,14 @@ type takenCell = {
 export class PlacementService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly gameService: GameService,
+    // private readonly gameService: GameService,
     private readonly ruleService: RuleService,
   ) { }
 
   private async getCellText(
     rowIdx: number,
     columnIdx: number,
-    takenCells: takenCell[],
+    takenCells: appliedCell[],
   ) {
     if (columnIdx > 0 && rowIdx > 0) {
       const values = takenCells.filter(
@@ -45,20 +45,28 @@ export class PlacementService {
   private getCellProps(
     rowIdx: number,
     columnIdx: number,
-    takenCells: takenCell[],
+    takenCells: appliedCell[],
+    spaceAroundCells: appliedCell[],
   ): { isButton: boolean; isDisabled: boolean; isAxis: boolean } {
     if (columnIdx < 1 || rowIdx < 1) {
       return { isButton: false, isDisabled: true, isAxis: true };
     }
-    const values = takenCells.filter(
+    const takenCellsValues = takenCells.filter(
       (item) => item.cell === this.getCellIdx(rowIdx - 1, columnIdx - 1),
     );
-    if (values.length > 0) {
-      console.log('values', values);
+    if (takenCellsValues.length > 0) {
+      // console.log('values', takenCellsValues);
       return { isButton: false, isDisabled: true, isAxis: false };
     } else {
-      return { isButton: true, isDisabled: false, isAxis: false };
+      const spaceAroundCellsValues = spaceAroundCells.filter(
+        (item) => item.cell === this.getCellIdx(rowIdx - 1, columnIdx - 1),
+      );
+      if (spaceAroundCellsValues.length > 0) {
+        // console.log('values', spaceAroundCellsValues);
+        return { isButton: true, isDisabled: true, isAxis: false };
+      }
     }
+    return { isButton: true, isDisabled: false, isAxis: false };
   }
 
   private getCellIdx(rowIdx: number, columnIdx: number) {
@@ -78,33 +86,44 @@ export class PlacementService {
     return this.getCellIdx(rowIdx - 1, columnIdx - 1).toString();
   }
 
-  async getTakenCells(gameId: number, userId: number) {
+  async getAppliedCells(gameId: number, userId: number) {
     const placement = await this.prisma.placement.findMany({
       where: { gameId, userId },
       include: {
-        Sheep: {
+        Ship: {
           select: {
             name: true,
             length: true,
           },
         },
-        PlacementLog: true,
+        TakenCells: true,
+        SpaceAroundCells: true,
       },
     });
     // console.log('placement 1', placement, placement.at(0).PlacementLog.at(0));
     const takenCells = [];
     placement.forEach((item) => {
-      item.PlacementLog.forEach((cell) => {
-        takenCells.push({ cell: cell.cell, length: item.Sheep.length });
+      item.TakenCells.forEach((cell) => {
+        takenCells.push({ cell: cell.cell, length: item.Ship.length });
       });
     });
-    return takenCells;
+    const spaceAroundCells = [];
+    placement.forEach((item) => {
+      item.SpaceAroundCells.forEach((cell) => {
+        spaceAroundCells.push({ cell: cell.cell, length: 0 });
+      });
+    });
+
+    return { takenCells, spaceAroundCells };
   }
 
   async getPlacementForRender(gameId: number, userId: number) {
     const result = [];
-    const takenCells = await this.getTakenCells(gameId, userId);
-    console.log('takenCells', takenCells);
+    const { takenCells, spaceAroundCells } = await this.getAppliedCells(
+      gameId,
+      userId,
+    );
+    // console.log('takenCells', takenCells, spaceAroundCells);
 
     for (let rowIdx: number = 0; rowIdx < 11; rowIdx++) {
       const row = [];
@@ -115,12 +134,13 @@ export class PlacementService {
           rowIdx,
           columnIdx,
           takenCells,
+          spaceAroundCells,
         );
         row.push({ id, text, isButton, isDisabled, isAxis });
       }
       result.push({ row });
     }
-    console.log(result.at(1).row);
+    // console.log(result.at(1).row);
     return result;
   }
 
@@ -160,57 +180,64 @@ export class PlacementService {
     }
   }
 
-  private isFreeAround(map: string, cells: number[]) {
-    const result = cells.reduce((acc: number, item: number) => {
-      const top = item < 10 ? 0 : Number(map.charAt(item - 10));
-      const bottom = item > 89 ? 0 : Number(map.charAt(item + 10));
-      const left = item % 10 === 0 ? 0 : Number(map.charAt(item - 1));
-      const rigth = (item + 1) % 10 === 0 ? 0 : Number(map.charAt(item + 1));
-      const topLeft =
-        item < 10 || item % 10 === 0 ? 0 : Number(map.charAt(item - 11));
-      const topRight =
-        item < 10 || (item + 1) % 10 === 0 ? 0 : Number(map.charAt(item - 9));
-      const bottomLeft =
-        item > 89 || item % 10 === 0 ? 0 : Number(map.charAt(item + 9));
-      const bottomRight =
-        item > 89 || (item + 1) % 10 === 0 ? 0 : Number(map.charAt(item + 11));
-
-      // console.log(
-      //   item,
-      //   'item',
-      //   top,
-      //   bottom,
-      //   left,
-      //   rigth,
-      //   topLeft,
-      //   topRight,
-      //   bottomLeft,
-      //   bottomRight,
-      // );
-
-      return (
-        acc +
-        top +
-        bottom +
-        left +
-        rigth +
-        topLeft +
-        topRight +
-        bottomLeft +
-        bottomRight
-      );
-    }, 0);
-    return result === 0;
+  private getSpaceAroundCells(cell: number) {
+    const isLeftBorder = cell % 10 === 0;
+    if (isLeftBorder) {
+      return [cell - 10, cell - 9, cell + 1, cell + 10, cell + 11];
+    }
+    const isRightBorder = (cell + 1) % 10 === 0;
+    if (isRightBorder) {
+      return [cell - 1, cell - 10, cell - 11, cell + 9, cell + 10];
+    }
+    return [
+      cell - 1,
+      cell - 10,
+      cell - 11,
+      cell - 9,
+      cell + 1,
+      cell + 9,
+      cell + 10,
+      cell + 11,
+    ];
   }
 
-  getSheepCoord(cells: number[]) {
-    const result = cells.map((item) => {
-      const rowIdx = Math.floor(item / 10);
-      const columnIdx = item % 10;
-      return columnsLegend.charAt(columnIdx) + rowsLegend.at(rowIdx).toString();
+  private isFreeAround(takenCells: number[], cells: number[]) {
+    let intersection = cells.filter((item) => takenCells.includes(item));
+    if (intersection.length > 0) {
+      return { isFreeAround: false, cellsAround: null };
+    }
+    let shipSpaceAroundCells = [];
+    cells.forEach((item) => {
+      shipSpaceAroundCells.push(...this.getSpaceAroundCells(item));
     });
-    return result;
+    shipSpaceAroundCells = [...new Set(shipSpaceAroundCells)]
+      .sort(this.compareNumbers)
+      .filter((item) => item >= 0 && item < 100);
+
+    intersection = shipSpaceAroundCells.filter((item) =>
+      takenCells.includes(item),
+    );
+    if (intersection.length > 0) {
+      return { isFreeAround: false, spaceAroundCells: null };
+    }
+
+    shipSpaceAroundCells = shipSpaceAroundCells
+      .filter((item) => !cells.includes(item))
+      .map((item) => {
+        return { cell: item };
+      });
+
+    return { isFreeAround: true, shipSpaceAroundCells };
   }
+
+  // DeletegetShipCoordDelete(cells: number[]) {
+  //   const result = cells.map((item) => {
+  //     const rowIdx = Math.floor(item / 10);
+  //     const columnIdx = item % 10;
+  //     return columnsLegend.charAt(columnIdx) + rowsLegend.at(rowIdx).toString();
+  //   });
+  //   return result;
+  // }
 
   private compareNumbers(a: number, b: number) {
     return a - b;
@@ -219,7 +246,7 @@ export class PlacementService {
   async getInstalledShips(gameId: number, userId: number) {
     const placement = await this.prisma.placement.groupBy({
       where: { gameId, userId },
-      by: ['sheepId'],
+      by: ['shipId'],
       _count: {
         _all: true,
       },
@@ -227,20 +254,19 @@ export class PlacementService {
     // console.log('getShips', placement);
     return placement.map((item) => {
       return {
-        sheepId: item.sheepId,
+        shipId: item.shipId,
         quantity: item._count._all,
       };
     });
   }
 
   async getAvailableShips(gameId: number, userId: number) {
-    const installedSheeps = await this.getInstalledShips(gameId, userId);
-    // console.log('installedSheeps', installedSheeps);
+    const installedShips = await this.getInstalledShips(gameId, userId);
     const rules = await this.ruleService.findMany();
     const availableShips = [];
     rules.forEach((item) => {
-      const isInstalled = installedSheeps.filter(
-        (installed) => installed.sheepId === item.sheepId,
+      const isInstalled = installedShips.filter(
+        (installed) => installed.shipId === item.shipId,
       );
       // console.log('isInstalled', item.sheepId, isInstalled, isInstalled.length);
       const quantity =
@@ -249,10 +275,10 @@ export class PlacementService {
           : item.quantity;
       if (quantity > 0) {
         availableShips.push({
-          sheepId: item.sheepId,
+          shipId: item.shipId,
           quantity,
-          name: item.Sheep.name,
-          length: item.Sheep.length,
+          name: item.Ship.name,
+          length: item.Ship.length,
         });
       }
     });
@@ -260,47 +286,202 @@ export class PlacementService {
   }
 
   async placeShip(gameId: number, userId: number, dto: PlacementDto) {
-    const { sheepId, cells } = dto;
-    // const game = await this.gameService.findById(gameId);
-    const rule = await this.ruleService.findBySheepId(sheepId);
-    const cellsSorted = [...new Set(cells)].sort(this.compareNumbers);
+    const { shipId, cells } = dto;
+    const rule = await this.ruleService.findByShipId(shipId);
+
+    const shipCells = [...new Set(cells)].sort(this.compareNumbers);
     // console.log('cellsSorted', cellsSorted, typeof cellsSorted.at(0));
-    console.log('dto', dto);
+    // console.log('dto', dto);
 
     // console.log(this.isInRange(cellsSorted));
     // console.log(this.isValidForm(rule.Sheep.length, cellsSorted));
     // console.log(this.isFreeAround(game.mapUserStart, cellsSorted));
     if (
-      this.isInRange(cellsSorted) &&
-      this.isValidForm(rule.Sheep.length, cellsSorted)
+      this.isInRange(shipCells) &&
+      this.isValidForm(rule.Ship.length, shipCells)
       // &&
       // this.isFreeAround(game.mapUserStart, cellsSorted)
     ) {
-      // const newMap = game.mapUserStart.split('');
-      // cellsSorted.forEach((item) => {
-      //   newMap.splice(item, 1, rule.Sheep.length.toString());
-      // });
-      // console.log("newMap.join('')", newMap.join(''));
-      const cells = cellsSorted.map((item) => {
+      const { takenCells } = await this.getAppliedCells(gameId, userId);
+      const { isFreeAround, shipSpaceAroundCells } = this.isFreeAround(
+        takenCells,
+        shipCells,
+      );
+      if (!isFreeAround) {
+        return null;
+      }
+      const shipTakenCells = shipCells.map((item) => {
         return { cell: item };
       });
 
       const placement = await this.prisma.placement.create({
         data: {
           gameId,
-          sheepId,
+          shipId,
           userId,
-          PlacementLog: {
-            create: cells,
+          TakenCells: {
+            create: shipTakenCells,
+          },
+          SpaceAroundCells: {
+            create: shipSpaceAroundCells,
           },
         },
         include: {
-          PlacementLog: true,
+          TakenCells: true,
+          SpaceAroundCells: true,
         },
       });
-      console.log('placementNew', placement);
+      // console.log('placementNew', placement);
       return placement;
     }
     return null;
+  }
+
+  async deletePlacement(gameId: number, userId: number) {
+    // console.log('deletePlacement');
+    await this.prisma.placement.deleteMany({ where: { gameId, userId } });
+  }
+
+  private plus(a: number, b: number) {
+    return a + b;
+  }
+
+  private minus(a: number, b: number) {
+    return a - b;
+  }
+
+  private calculateCell(fun: any, multiplier: number) {
+    return function (a: number) {
+      return function (b: number) {
+        return fun(a, b * multiplier);
+      };
+    };
+  }
+
+  private getShipGeneratedCells(freeCells: number[], length: number) {
+    const arrayShipGeneratedCells = [];
+    const startCellIdx = Math.floor(Math.random() * freeCells.length);
+    const startCell = freeCells.at(startCellIdx);
+
+    [
+      { fun: this.plus, multiplier: 1 },
+      { fun: this.minus, multiplier: 1 },
+      { fun: this.plus, multiplier: 10 },
+      { fun: this.minus, multiplier: 10 },
+    ].forEach((item) => {
+      const cells = [...Array(length).keys()].map((x) =>
+        this.calculateCell(item.fun, item.multiplier)(startCell)(x),
+      );
+      const intersection = cells.filter((item) => freeCells.includes(item));
+      if (intersection.length === length) {
+        arrayShipGeneratedCells.push(cells);
+      }
+    });
+
+    if (arrayShipGeneratedCells.length < 1) {
+      return null;
+    }
+    const arrayShipGeneratedCellsIdx = Math.floor(
+      Math.random() * arrayShipGeneratedCells.length,
+    );
+    return arrayShipGeneratedCells.at(arrayShipGeneratedCellsIdx);
+  }
+
+  async placeShipByBot(
+    gameId: number,
+    userId: number,
+    shipId: number,
+    length: number,
+  ) {
+    const { takenCells, spaceAroundCells } = await this.getAppliedCells(
+      gameId,
+      userId,
+    );
+    const appliedCells = [
+      ...takenCells.map((item) => item.cell),
+      ...spaceAroundCells.map((item) => item.cell),
+    ];
+    const freeCells = [...Array(100).keys()].filter(
+      (cell) => !appliedCells.includes(cell),
+    );
+    let cells: number[] = [];
+    do {
+      cells = this.getShipGeneratedCells(freeCells, length);
+    } while (cells === null);
+    return { shipId, cells };
+  }
+
+  async placeShipsByBot(gameId: number, userId: number) {
+    const rules = await this.ruleService.findMany();
+    const { takenCells } = await this.getAppliedCells(gameId, userId);
+    console.log('bot', gameId, userId, takenCells, rules);
+    if (takenCells.length > 0) {
+      return;
+    }
+    console.log('bot', gameId, userId, takenCells, rules);
+    // [
+    //   { cell: 0, length: 1 },
+    //   { cell: 22, length: 4 },
+    //   { cell: 23, length: 4 },
+    //   { cell: 24, length: 4 },
+    //   { cell: 25, length: 4 }
+    // ]
+    type placement = {
+      gameId: number;
+      userId: number;
+      shipId: number;
+      length: number;
+    };
+    const chainShips: placement[] = [];
+    rules.forEach((item) => {
+      for (let i = 0; i < item.quantity; i++) {
+        chainShips.push({
+          gameId,
+          userId,
+          shipId: item.shipId,
+          length: item.Ship.length,
+        });
+      }
+    });
+
+    // const chainScripts = (chainShips: placement[]) =>
+    chainShips.reduce(async (acc, placementShip) => {
+      await acc;
+      return await new Promise(() => {
+        console.log(placementShip);
+        const { gameId, userId, shipId, length } = placementShip;
+        this.placeShipByBot(gameId, userId, shipId, length);
+      });
+    }, Promise.resolve());
+
+    //   await this.placeShipByBot(
+    //     gameId,
+    //     userId,
+    //     item.shipId,
+    //     item.Ship.length,
+    //   );
+    // }
+
+    // [
+    //   {
+    //     id: 1,
+    //     shipId: 1,
+    //     quantity: 1,
+    //     Ship: { name: 'линкор', length: 4 }
+    //   },
+    //   {
+    //     id: 2,
+    //     shipId: 2,
+    //     quantity: 2,
+    //     Ship: { name: 'крейсер', length: 3 }
+    //   },
+    //   {
+    //     id: 3,
+    //     shipId: 3,
+    //     quantity: 3,
+    //     Ship: { name: 'эсминец', length: 2 }
+    //   },
+    //   { id: 4, shipId: 4, quantity: 4, Ship: { name: 'катер', length: 1 } }
+    // ]
   }
 }

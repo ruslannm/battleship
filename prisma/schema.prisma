@@ -45,43 +45,53 @@ model Log {
   @@map("logs")
 }
 
-model Sheep {
+model Ship {
   id        Int         @id @default(autoincrement())
   name      String      @unique
   length    Int
   Rule      Rule[]
   Placement Placement[]
 
-  @@map("sheeps")
+  @@map("ships")
 }
 
 model Rule {
-  id       Int   @id @default(autoincrement())
-  Sheep    Sheep @relation(fields: [sheepId], references: [id])
-  sheepId  Int   @map("sheep_id")
+  id       Int  @id @default(autoincrement())
+  Ship     Ship @relation(fields: [shipId], references: [id])
+  shipId   Int  @map("ship_id")
   quantity Int
 
   @@map("rules")
 }
 
 model Placement {
-  id           Int            @id @default(autoincrement())
-  Game         Game           @relation(fields: [gameId], references: [id])
-  gameId       Int            @map("game_id")
-  Sheep        Sheep          @relation(fields: [sheepId], references: [id])
-  sheepId      Int            @map("sheep_id")
-  User         User           @relation(fields: [userId], references: [id])
-  userId       Int            @map("user_id")
-  PlacementLog PlacementLog[]
+  id               Int               @id @default(autoincrement())
+  Game             Game              @relation(fields: [gameId], references: [id])
+  gameId           Int               @map("game_id")
+  Ship             Ship              @relation(fields: [shipId], references: [id])
+  shipId           Int               @map("sheep_id")
+  User             User              @relation(fields: [userId], references: [id])
+  userId           Int               @map("user_id")
+  TakenCells       TakenCell[]
+  SpaceAroundCells SpaceAroundCell[]
 
   @@map("placement")
 }
 
-model PlacementLog {
+model TakenCell {
   id          Int       @id @default(autoincrement())
-  Placement   Placement @relation(fields: [placementId], references: [id])
+  Placement   Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
   placementId Int       @map("placement_id")
   cell        Int       @default(-1)
 
-  @@map("placement_logs")
+  @@map("taken_cells")
+}
+
+model SpaceAroundCell {
+  id          Int       @id @default(autoincrement())
+  Placement   Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
+  placementId Int       @map("placement_id")
+  cell        Int       @default(-1)
+
+  @@map("space_around_cells")
 }

@@ -110,22 +110,5 @@ export class GameController {
     }
   }
 
-  @Put('/:id')
-  async resetMap(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Param(
-      'id',
-      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND }),
-    )
-    id: number,
-  ) {
-    const user = req.user as UserValidatedDto;
-    const game = await this.gameService.find({ id, userId: user.id });
-    if (!game) {
-      throw new NotFoundException();
-    }
-    // await this.gameService.resetMap(id);
-    return res.status(200).json({ success: true });
-  }
+
 }

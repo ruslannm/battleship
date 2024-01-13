@@ -2,20 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RuleDto } from './dto/rule.dto';
 
+const includeSelect = {
+  Ship: {
+    select: {
+      name: true,
+      length: true,
+    },
+  },
+};
+
 @Injectable()
 export class RuleService {
   constructor(private readonly prisma: PrismaService) { }
 
   async findMany() {
     return this.prisma.rule.findMany({
-      include: {
-        Sheep: {
-          select: {
-            name: true,
-            length: true,
-          },
-        },
-      },
+      include: includeSelect,
     });
   }
 
@@ -24,30 +26,16 @@ export class RuleService {
       where: {
         id,
       },
-      include: {
-        Sheep: {
-          select: {
-            name: true,
-            length: true,
-          },
-        },
-      },
+      include: includeSelect,
     });
   }
 
-  async findBySheepId(sheepId: number) {
+  async findByShipId(shipId: number) {
     return await this.prisma.rule.findFirst({
       where: {
-        sheepId,
+        shipId,
       },
-      include: {
-        Sheep: {
-          select: {
-            name: true,
-            length: true,
-          },
-        },
-      },
+      include: includeSelect,
     });
   }
 
@@ -74,14 +62,14 @@ export class RuleService {
 
   async findManyAllSheeps() {
     const allRules = await this.prisma.rule.groupBy({
-      by: ['sheepId'],
+      by: ['shipId'],
       _count: {
         _all: true,
       },
     });
     return allRules.map((item) => {
       return {
-        sheepId: item.sheepId,
+        shipId: item.shipId,
         count: item._count._all,
       };
     });

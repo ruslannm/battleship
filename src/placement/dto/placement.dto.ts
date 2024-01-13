@@ -5,7 +5,7 @@ export class PlacementDto {
   @IsNotEmpty()
   @IsInt()
   @Transform(({ value }) => Number(value))
-  sheepId: number;
+  shipId: number;
   @IsArray()
   @Transform(({ value }) =>
     typeof value === 'string'

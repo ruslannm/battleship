@@ -39,13 +39,13 @@ const dataUsers: user[] = [
   },
 ];
 
-type sheep = {
+type ship = {
   id: number;
   name: string;
   length: number;
 };
 
-const dataSheeps: sheep[] = [
+const dataShips: ship[] = [
   {
     id: 1,
     name: 'линкор',
@@ -70,29 +70,29 @@ const dataSheeps: sheep[] = [
 
 type rule = {
   id: number;
-  sheepId: number;
+  shipId: number;
   quantity: number;
 };
 
 const rules: rule[] = [
   {
     id: 1,
-    sheepId: 1,
+    shipId: 1,
     quantity: 1,
   },
   {
     id: 2,
-    sheepId: 2,
+    shipId: 2,
     quantity: 2,
   },
   {
     id: 3,
-    sheepId: 3,
+    shipId: 3,
     quantity: 3,
   },
   {
     id: 4,
-    sheepId: 4,
+    shipId: 4,
     quantity: 4,
   },
 ];
@@ -106,9 +106,9 @@ Promise.all([
       create: item,
     });
   }),
-  ...dataSheeps.map(async (item: sheep) => {
+  ...dataShips.map(async (item: ship) => {
     const { id, ...data } = item;
-    await prisma.sheep.upsert({
+    await prisma.ship.upsert({
       where: { id },
       update: data,
       create: item,

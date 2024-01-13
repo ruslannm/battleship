@@ -7,7 +7,8 @@ import {
 } from 'src/placement/dto/placement.dto';
 import { LogUpdateDto } from './dto/game.dto';
 import { RuleService } from 'src/rule/rule.service';
-import { defaultMap, defaultStage } from 'src/constants';
+import { defaultStage } from 'src/constants';
+import { PlacementService } from 'src/placement/placement.service';
 
 // const fleetSelect = {
 //   select: {
@@ -36,6 +37,7 @@ export class GameService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ruleService: RuleService,
+    private readonly placementService: PlacementService,
   ) { }
 
   async findMany() {
@@ -77,12 +79,12 @@ export class GameService {
 
   async create(userId: number) {
     // const rules = await this.ruleSrevice.findMany();
-    const rules = await this.ruleService.findMany();
-    console.log('rules', rules);
-    const fleetBot = rules.map((item) => {
-      return { sheepId: item.sheepId, quantity: item.quantity };
-    });
-    console.log('fleetBot', fleetBot);
+    // const rules = await this.ruleService.findMany();
+    // console.log('rules', rules);
+    // const fleetBot = rules.map((item) => {
+    //   return { sheepId: item.sheepId, quantity: item.quantity };
+    // });
+    // console.log('fleetBot', fleetBot);
     // return [];
     const result = await this.prisma.game.create({
       data: {
@@ -101,13 +103,14 @@ export class GameService {
   }
 
   async getGameByUserId(userId: number) {
-    const game = await this.findByUserId(userId);
+    let game = await this.findByUserId(userId);
     // console.log('getGameByUserId', game);
 
-    if (game) {
-      return game;
+    if (!game) {
+      game = await this.create(userId);
+      await this.placementService.placeShipsByBot(game.id, 0);
     }
-    return await this.create(userId);
+    return game;
   }
 
   // async update(

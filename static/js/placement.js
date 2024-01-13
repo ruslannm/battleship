@@ -46,7 +46,7 @@ function handleFormSubmit(event) {
     return;
   }
   const data = serializeForm(mapPlacementForm);
-  handleCheck(data, event, ruleInvalidMessage, 'sheepId');
+  handleCheck(data, event, ruleInvalidMessage, 'shipId');
   handleCheck(data, event, cellsInvalidMessage, 'cells');
 }
 
@@ -62,8 +62,8 @@ const resetMapButton = document.getElementById('reset-map');
 resetMapButton.addEventListener('click', handleResetMap, false);
 
 function handleResetMap() {
-  fetch(`/game/${resetMapButton.value}`, {
-    method: 'PUT',
+  fetch(`/placement`, {
+    method: 'DELETE',
   }).then(() => {
     window.location.reload();
   });

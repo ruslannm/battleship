@@ -23,6 +23,7 @@ import { UserValidatedDto } from 'src/user/dto/user.dto';
 import { GameService } from 'src/game/game.service';
 import { PlacementService } from './placement.service';
 import { PlacementDto } from 'src/placement/dto/placement.dto';
+import { placementStage } from 'src/constants';
 
 @UseGuards(AccessJwtGuard)
 @Controller('placement')
@@ -30,7 +31,7 @@ export class MapController {
   constructor(
     private readonly gameService: GameService,
     private readonly ruleService: RuleService,
-    private readonly mapService: PlacementService,
+    private readonly placementService: PlacementService,
   ) { }
 
   @Get()
@@ -41,7 +42,7 @@ export class MapController {
     const rules = await this.ruleService.findMany();
     // console.log('rules', rules);
     const fleetBot = rules.map((item) => {
-      return { sheepId: item.sheepId, quantity: item.quantity };
+      return { sheepId: item.shipId, quantity: item.quantity };
     });
     console.log('fleetBot', fleetBot);
     const game = await this.gameService.getGameByUserId(user.id);
@@ -51,16 +52,16 @@ export class MapController {
       res.render('not-found', { isAuth: true });
       return;
     }
-    const placement = await this.mapService.getPlacementForRender(
+    const placement = await this.placementService.getPlacementForRender(
       game.id,
       user.id,
     );
 
-    const availableShips = await this.mapService.getAvailableShips(
+    const availableShips = await this.placementService.getAvailableShips(
       game.id,
       user.id,
     );
-
+    // await this.placementService.placeShipsByBot(game.id, 0);
     // console.log('2 game/ / map', placement[1]['row']);
     // console.log('2 game/ / map', game);
     // const user = req.user as UserValidatedDto;
@@ -79,7 +80,7 @@ export class MapController {
       gameId: game.id,
       availableShips,
       // isSubmitDisabled: unusedRules.length === 0,
-      // submitText: unusedRules.length === 0 ? 'Начать игру' : 'Применить',
+      submitText: availableShips.length === 0 ? 'Начать игру' : 'Применить',
       // isResetDisabled: game.status !== defaultStatus,
       Log: game.logs.slice(-10),
       map: placement,
@@ -105,7 +106,11 @@ export class MapController {
       // console.log('ruleItem. cells', rule, cells, typeof cells);
       // const player = await this.userService.findById(user.id);
       const game = await this.gameService.getGameByUserId(user.id);
-      const placement = await this.mapService.placeShip(game.id, user.id, dto);
+      const placement = await this.placementService.placeShip(
+        game.id,
+        user.id,
+        dto,
+      );
       // console.log('newGame', newGame);
       if (placement) {
         res.redirect(`/placement`);
@@ -118,5 +123,16 @@ export class MapController {
       // }
       // res.redirect(`/map`);
     }
+  }
+
+  @Delete()
+  async deletePlacement(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as UserValidatedDto;
+    const game = await this.gameService.getGameByUserId(user.id);
+    if (!game || !(game.stage === placementStage)) {
+      throw new NotFoundException();
+    }
+    await this.placementService.deletePlacement(game.id, user.id);
+    return res.status(200).json({ success: true });
   }
 }
