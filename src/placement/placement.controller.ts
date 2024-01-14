@@ -37,17 +37,16 @@ export class MapController {
   @Get()
   async render(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
-    // console.log('user', user, 'id', id);
-
-    // const rules = await this.ruleService.findMany();
-    // console.log('rules', rules);
     const game = await this.gameService.getGameByUserId(user.id);
-    // console.log('game/ / map', game);
-    // { id: 1, stage: 'placement', userId: 2, logs: [] }
-    if (!game || !(game.stage === 'placement')) {
+    if (!game) {
       res.render('not-found', { isAuth: true });
       return;
     }
+    if (!(game.stage === 'placement')) {
+      res.redirect(`/game/${game.id}`);
+      return;
+    }
+
     const placement = await this.placementService.getPlacementForRender(
       game.id,
       user.id,
@@ -57,21 +56,6 @@ export class MapController {
       game.id,
       user.id,
     );
-    // await this.placementService.placeShipsByBot(game.id, 0);
-    // console.log('2 game/ / map', placement[1]['row']);
-    // console.log('2 game/ / map', game);
-    // const user = req.user as UserValidatedDto;
-    // const { unusedRules, gameRules } = { unusedRules: null, gameRules: null };
-    // await this.ruleService.getRenderedGameRules(game.rules);
-    // const rulesGame = game.rules;
-    // console.log('rules/ rulesGame', rules);
-
-    // console.log(rules);
-    // const map = await this.mapService.getMapForRender(
-    //   game.mapUserStart,
-    //   game.mapUser,
-    //   true,
-    // );
     res.render('placement', {
       gameId: game.id,
       availableShips,

@@ -75,7 +75,10 @@ function handleResetMap() {
 function handleFixingMap() {
   fetch(`/game/${fixingMapButton.value}`, {
     method: 'PUT',
-  }).then(() => {});
+  }).then(() => {
+    // console.log('ok');
+    window.location.replace(`/game/${fixingMapButton.value}`);
+  });
 }
 
 const tooltipTriggerList = [].slice.call(

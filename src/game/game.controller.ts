@@ -21,7 +21,12 @@ import { Response, Request } from 'express';
 import { AccessJwtGuard } from 'src/auth/access-jwt.guard';
 import { UserValidatedDto } from 'src/user/dto/user.dto';
 import { GameService } from './game.service';
-import { gamingStage, placementStage, resultStage } from 'src/constants';
+import {
+  botUserId,
+  gamingStage,
+  placementStage,
+  resultStage,
+} from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
 
 @UseGuards(AccessJwtGuard)
@@ -55,34 +60,20 @@ export class GameController {
     if (game.stage === placementStage) {
       res.redirect(`/placement`);
     } else {
+      const placementUser = await this.placementService.getPlacementForRender(
+        game.id,
+        user.id,
+      );
+
+      const placementOpponent =
+        await this.placementService.getPlacementForRender(game.id, botUserId);
+
       res.render('game', {
-        placementUser: [],
-        placementOpponent: [],
+        placementUser: { map: placementUser },
+        placementOpponent: { map: placementOpponent },
         isAuth: true,
       });
     }
-    // console.log('game', game);
-
-    // const sheepsUser = [
-    //   { name: null, count: 0 },
-    //   { name: null, count: 0 },
-    //   { name: null, count: 0 },
-    //   { name: null, count: 0 },
-    // ];
-    // game.rules.forEach((item) => {
-    //   sheepsUser[item.Sheep.length - 1].count += 1;
-    //   sheepsUser[item.Sheep.length - 1].name =
-    //     item.Sheep.name + ', ' + item.Sheep.length + 'кл.';
-    // });
-    // console.log('sheepsUser', sheepsUser, game.rules[0].Sheep.name);
-
-    //console.log('findManySheeps', await this.ruleService.findManyAllSheeps());
-    // const mapUser = this.mapService.getMapForRender(
-    //   game.mapUserStart,
-    //   game.mapUser,
-    //   true,
-    // );
-    // const rules = await this.ruleService.findMany();
   }
 
   @Get('')
@@ -125,7 +116,7 @@ export class GameController {
     id: number,
   ) {
     const user = req.user as UserValidatedDto;
-    console.log('Put', user, 'id', id);
+    // console.log('Put', user, 'id', id);
 
     const game = await this.gameService.find({ id, userId: user.id });
     if (!game) {
@@ -142,13 +133,10 @@ export class GameController {
         return;
       }
       await this.gameService.update(id, { stage: gamingStage });
-      console.log('update');
-      res.redirect(`/game/${game.id}`);
-      return;
+      res.status(HttpStatus.OK).json({ gameId: game.id }).send();
     } else if (game.stage === gamingStage) {
       await this.gameService.update(id, { stage: resultStage });
     }
-    console.log('game');
     return true;
     // res.render('game', {
     //   placementUser: [],

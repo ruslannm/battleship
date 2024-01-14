@@ -1,3 +1,4 @@
+export const botUserId = 0;
 export const defaultMap = '0'.repeat(100);
 export const placementStage = 'placement';
 export const gamingStage = 'gaming';
