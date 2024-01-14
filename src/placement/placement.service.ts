@@ -387,16 +387,20 @@ export class PlacementService {
     return arrayShipGeneratedCells.at(arrayShipGeneratedCellsIdx);
   }
 
-  async placeShipByBot(
-    gameId: number,
-    userId: number,
-    shipId: number,
-    length: number,
-  ) {
+  async placeShipByBot(placementShip: {
+    gameId: number;
+    userId: number;
+    shipId: number;
+    length: number;
+  }) {
+    const { gameId, userId, shipId, length } = placementShip;
+    console.log('1');
+
     const { takenCells, spaceAroundCells } = await this.getAppliedCells(
       gameId,
       userId,
     );
+    console.log('2', takenCells, spaceAroundCells);
     const appliedCells = [
       ...takenCells.map((item) => item.cell),
       ...spaceAroundCells.map((item) => item.cell),
@@ -404,11 +408,15 @@ export class PlacementService {
     const freeCells = [...Array(100).keys()].filter(
       (cell) => !appliedCells.includes(cell),
     );
+    console.log('3', freeCells);
     let cells: number[] = [];
     do {
       cells = this.getShipGeneratedCells(freeCells, length);
+      console.log('4', cells);
     } while (cells === null);
-    return { shipId, cells };
+    console.log('5', cells);
+    await this.placeShip(gameId, userId, { shipId, cells });
+    return;
   }
 
   async placeShipsByBot(gameId: number, userId: number) {
@@ -443,15 +451,19 @@ export class PlacementService {
         });
       }
     });
+    console.log('chainShips', chainShips);
+
+    // await chainShips.reduce((acc: Promise<void>, placementShip) => {
+    //   // await acc;
+    //   return acc.then(() => this.placeShipByBot(placementShip));
+    // }, Promise.resolve());
+
 
     // const chainScripts = (chainShips: placement[]) =>
-    chainShips.reduce(async (acc, placementShip) => {
+    await chainShips.reduce(async (acc: Promise<void>, placementShip) => {
+      // await acc;
       await acc;
-      return await new Promise(() => {
-        console.log(placementShip);
-        const { gameId, userId, shipId, length } = placementShip;
-        this.placeShipByBot(gameId, userId, shipId, length);
-      });
+      return await this.placeShipByBot(placementShip);
     }, Promise.resolve());
 
     //   await this.placeShipByBot(
