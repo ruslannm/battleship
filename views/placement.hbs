@@ -35,12 +35,18 @@
           Размести на карте!
         </p>
         <div class="d-flex justify-content-start">
-        <button id = "reset-map" type='button' class='btn btn-warning mt-2 ms-5' 
+        <button id = "reset-map" type='button' class='btn btn-outline-warning mt-2 ms-5' 
         value="{{gameId}}" {{#if isResetDisabled}} disabled {{/if}}
         >Стереть карту</button>
-        <button id = "submit-map" type='submit' class='btn btn-success mt-2 ms-2' value="{{gameId}}">
-          {{submitText}}
+        {{#if isSubmitDisabled}}
+        <button id = "fixing-map" type='button' class='btn btn-outline-success mt-2 ms-2' 
+        value="{{gameId}}"
+        >Начать игру</button>
+        {{else}}
+         <button id = "submit-placement" type='submit' class='btn btn-outline-success mt-2 ms-2' value="{{gameId}}">
+          Применить
           </button>
+          {{/if}}
         </div>
     </div>
  

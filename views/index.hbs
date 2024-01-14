@@ -1,5 +1,5 @@
 <div class='container'>
-  <form action='game' , method='post'>
+  {{! <form action='game' , method='post'>
     <div class='d-flex flex-column my-3'>
       <div class='form-check'>
         <input
@@ -30,10 +30,20 @@
     </div>
     <button type='submit' class='btn btn-primary'>Разместить корабли и начать
       игру</button>
-  </form>
-  <h1 id='game-rules'>Правила игры</h1>
-  <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Soluta saepe
-    cumque tempora aspernatur at minima, nesciunt, voluptas atque rerum
-    obcaecati facilis consectetur et eum debitis aliquid repellat. Officiis,
-    itaque illo!</p>
+  </form> }}
+  <div class='row my-3'>
+    <div class='col-6'>
+      <a
+        href='/game'
+        class='btn btn-outline-success'
+        role='button'
+      >{{gameButtonText}}</a></div>
+  </div>
+  <div class='row'>
+    <h1 id='game-rules'>Правила игры</h1>
+    <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Soluta saepe
+      cumque tempora aspernatur at minima, nesciunt, voluptas atque rerum
+      obcaecati facilis consectetur et eum debitis aliquid repellat. Officiis,
+      itaque illo!</p>
+  </div>
 </div>

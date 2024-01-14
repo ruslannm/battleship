@@ -39,12 +39,8 @@ export class MapController {
     const user = req.user as UserValidatedDto;
     // console.log('user', user, 'id', id);
 
-    const rules = await this.ruleService.findMany();
+    // const rules = await this.ruleService.findMany();
     // console.log('rules', rules);
-    const fleetBot = rules.map((item) => {
-      return { sheepId: item.shipId, quantity: item.quantity };
-    });
-    console.log('fleetBot', fleetBot);
     const game = await this.gameService.getGameByUserId(user.id);
     // console.log('game/ / map', game);
     // { id: 1, stage: 'placement', userId: 2, logs: [] }
@@ -79,10 +75,10 @@ export class MapController {
     res.render('placement', {
       gameId: game.id,
       availableShips,
-      // isSubmitDisabled: unusedRules.length === 0,
-      submitText: availableShips.length === 0 ? 'Начать игру' : 'Применить',
-      // isResetDisabled: game.status !== defaultStatus,
-      Log: game.logs.slice(-10),
+      isSubmitDisabled: availableShips.length === 0,
+      // submitText: availableShips.length === 0 ? 'Начать игру' : 'Применить',
+      isResetDisabled: game.stage !== placementStage,
+      // Log: game.logs.slice(-10),
       map: placement,
       isAuth: true,
     });

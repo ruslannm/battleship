@@ -47,6 +47,7 @@ export class PlacementService {
     columnIdx: number,
     takenCells: appliedCell[],
     spaceAroundCells: appliedCell[],
+    isFullPlacement: boolean,
   ): { isButton: boolean; isDisabled: boolean; isAxis: boolean } {
     if (columnIdx < 1 || rowIdx < 1) {
       return { isButton: false, isDisabled: true, isAxis: true };
@@ -66,7 +67,7 @@ export class PlacementService {
         return { isButton: true, isDisabled: true, isAxis: false };
       }
     }
-    return { isButton: true, isDisabled: false, isAxis: false };
+    return { isButton: true, isDisabled: isFullPlacement, isAxis: false };
   }
 
   private getCellIdx(rowIdx: number, columnIdx: number) {
@@ -107,13 +108,13 @@ export class PlacementService {
         takenCells.push({ cell: cell.cell, length: item.Ship.length });
       });
     });
-    const spaceAroundCells = [];
+    let spaceAroundCells = [];
     placement.forEach((item) => {
       item.SpaceAroundCells.forEach((cell) => {
         spaceAroundCells.push({ cell: cell.cell, length: 0 });
       });
     });
-
+    spaceAroundCells = [...new Set(spaceAroundCells)];
     return { takenCells, spaceAroundCells };
   }
 
@@ -123,8 +124,8 @@ export class PlacementService {
       gameId,
       userId,
     );
-    // console.log('takenCells', takenCells, spaceAroundCells);
-
+    const availableShips = await this.getAvailableShips(gameId, userId);
+    const isFullPlacement = availableShips.length === 0;
     for (let rowIdx: number = 0; rowIdx < 11; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 11; columnIdx++) {
@@ -135,6 +136,7 @@ export class PlacementService {
           columnIdx,
           takenCells,
           spaceAroundCells,
+          isFullPlacement,
         );
         row.push({ id, text, isButton, isDisabled, isAxis });
       }
@@ -394,13 +396,13 @@ export class PlacementService {
     length: number;
   }) {
     const { gameId, userId, shipId, length } = placementShip;
-    console.log('1');
+    // console.log('1');
 
     const { takenCells, spaceAroundCells } = await this.getAppliedCells(
       gameId,
       userId,
     );
-    console.log('2', takenCells, spaceAroundCells);
+    // console.log('2', takenCells, spaceAroundCells);
     const appliedCells = [
       ...takenCells.map((item) => item.cell),
       ...spaceAroundCells.map((item) => item.cell),
@@ -408,13 +410,13 @@ export class PlacementService {
     const freeCells = [...Array(100).keys()].filter(
       (cell) => !appliedCells.includes(cell),
     );
-    console.log('3', freeCells);
+    // console.log('3', freeCells);
     let cells: number[] = [];
     do {
       cells = this.getShipGeneratedCells(freeCells, length);
-      console.log('4', cells);
+      // console.log('4', cells);
     } while (cells === null);
-    console.log('5', cells);
+    // console.log('5', cells);
     await this.placeShip(gameId, userId, { shipId, cells });
     return;
   }
@@ -422,18 +424,10 @@ export class PlacementService {
   async placeShipsByBot(gameId: number, userId: number) {
     const rules = await this.ruleService.findMany();
     const { takenCells } = await this.getAppliedCells(gameId, userId);
-    console.log('bot', gameId, userId, takenCells, rules);
+    // console.log('bot', gameId, userId, takenCells, rules);
     if (takenCells.length > 0) {
       return;
     }
-    console.log('bot', gameId, userId, takenCells, rules);
-    // [
-    //   { cell: 0, length: 1 },
-    //   { cell: 22, length: 4 },
-    //   { cell: 23, length: 4 },
-    //   { cell: 24, length: 4 },
-    //   { cell: 25, length: 4 }
-    // ]
     type placement = {
       gameId: number;
       userId: number;
@@ -451,13 +445,12 @@ export class PlacementService {
         });
       }
     });
-    console.log('chainShips', chainShips);
+    // console.log('chainShips', chainShips);
 
     // await chainShips.reduce((acc: Promise<void>, placementShip) => {
     //   // await acc;
     //   return acc.then(() => this.placeShipByBot(placementShip));
     // }, Promise.resolve());
-
 
     // const chainScripts = (chainShips: placement[]) =>
     await chainShips.reduce(async (acc: Promise<void>, placementShip) => {
@@ -465,35 +458,5 @@ export class PlacementService {
       await acc;
       return await this.placeShipByBot(placementShip);
     }, Promise.resolve());
-
-    //   await this.placeShipByBot(
-    //     gameId,
-    //     userId,
-    //     item.shipId,
-    //     item.Ship.length,
-    //   );
-    // }
-
-    // [
-    //   {
-    //     id: 1,
-    //     shipId: 1,
-    //     quantity: 1,
-    //     Ship: { name: 'линкор', length: 4 }
-    //   },
-    //   {
-    //     id: 2,
-    //     shipId: 2,
-    //     quantity: 2,
-    //     Ship: { name: 'крейсер', length: 3 }
-    //   },
-    //   {
-    //     id: 3,
-    //     shipId: 3,
-    //     quantity: 3,
-    //     Ship: { name: 'эсминец', length: 2 }
-    //   },
-    //   { id: 4, shipId: 4, quantity: 4, Ship: { name: 'катер', length: 1 } }
-    // ]
   }
 }

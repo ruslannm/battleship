@@ -5,6 +5,9 @@ import { Response, Request } from 'express';
 import { AccessJwtGuard } from './auth/access-jwt.guard';
 import { AuthService } from './auth/auth.service';
 import { ConfigService } from '@nestjs/config';
+import { UserValidatedDto } from './user/dto/user.dto';
+import { GameService } from './game/game.service';
+import { placementStage } from './constants';
 
 const configService = new ConfigService();
 const { accessCookiesName } = {
@@ -16,13 +19,19 @@ export class AppController {
   constructor(
     // private readonly orderService: OrderService,
     private readonly authService: AuthService,
+    private readonly gameService: GameService,
   ) { }
 
   @UseGuards(AccessJwtGuard)
   @Get()
   async root(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as UserValidatedDto;
+    const game = await this.gameService.getGameByUserId(user.id);
+    const gameButtonText =
+      game.stage === placementStage ? 'Поставить корабли' : 'Играть';
     res.render('index', {
       isAuth: true,
+      gameButtonText,
     });
 
     // const user = req.user as UserValidatedDto;

@@ -35,16 +35,16 @@ function serializeForm(formNode) {
 }
 
 function handleFormSubmit(event) {
-  if (submitMapButton.innerText === 'Начать игру') {
-    console.log('submitMapButton', submitMapButton);
-    console.log(`submitMapButton=${submitMapButton.innerText}=`);
-    console.log(`value=${submitMapButton.value}=`);
-    console.log(`/game/${submitMapButton.value}`);
-    window.location.replace(`/game/${submitMapButton.value}`);
-    event.preventDefault();
-    event.stopPropagation();
-    return;
-  }
+  // if (submitMapButton.innerText === 'Начать игру') {
+  //   // console.log('submitMapButton', submitMapButton);
+  //   // console.log(`submitMapButton=${submitMapButton.innerText}=`);
+  //   // console.log(`value=${submitMapButton.value}=`);
+  //   // console.log(`/game/${submitMapButton.value}`);
+  //   window.location.replace(`/game/${submitPlacementButton.value}`);
+  //   event.preventDefault();
+  //   event.stopPropagation();
+  //   return;
+  // }
   const data = serializeForm(mapPlacementForm);
   handleCheck(data, event, ruleInvalidMessage, 'shipId');
   handleCheck(data, event, cellsInvalidMessage, 'cells');
@@ -53,7 +53,7 @@ function handleFormSubmit(event) {
 const ruleInvalidMessage = document.getElementById('rule-invalid-message');
 const cellsInvalidMessage = document.getElementById('cells-invalid-message');
 
-const submitMapButton = document.getElementById('submit-map');
+// const submitPlacementButton = document.getElementById('submit-placement');
 
 const mapPlacementForm = document.getElementById('map-placement');
 mapPlacementForm.addEventListener('submit', handleFormSubmit, false);
@@ -61,12 +61,21 @@ mapPlacementForm.addEventListener('submit', handleFormSubmit, false);
 const resetMapButton = document.getElementById('reset-map');
 resetMapButton.addEventListener('click', handleResetMap, false);
 
+const fixingMapButton = document.getElementById('fixing-map');
+fixingMapButton.addEventListener('click', handleFixingMap, false);
+
 function handleResetMap() {
   fetch(`/placement`, {
     method: 'DELETE',
   }).then(() => {
     window.location.reload();
   });
+}
+
+function handleFixingMap() {
+  fetch(`/game/${fixingMapButton.value}`, {
+    method: 'PUT',
+  }).then(() => {});
 }
 
 const tooltipTriggerList = [].slice.call(

@@ -7,7 +7,7 @@ import {
 } from 'src/placement/dto/placement.dto';
 import { LogUpdateDto } from './dto/game.dto';
 import { RuleService } from 'src/rule/rule.service';
-import { defaultStage } from 'src/constants';
+import { closedStage, placementStage } from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
 
 // const fleetSelect = {
@@ -28,7 +28,7 @@ const includeSelect = {
 
 const whereFilter = {
   NOT: {
-    stage: 'closed',
+    stage: closedStage,
   },
 };
 
@@ -36,7 +36,7 @@ const whereFilter = {
 export class GameService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly ruleService: RuleService,
+    // private readonly ruleService: RuleService,
     private readonly placementService: PlacementService,
   ) { }
 
@@ -78,27 +78,13 @@ export class GameService {
   }
 
   async create(userId: number) {
-    // const rules = await this.ruleSrevice.findMany();
-    // const rules = await this.ruleService.findMany();
-    // console.log('rules', rules);
-    // const fleetBot = rules.map((item) => {
-    //   return { sheepId: item.sheepId, quantity: item.quantity };
-    // });
-    // console.log('fleetBot', fleetBot);
-    // return [];
     const result = await this.prisma.game.create({
       data: {
         userId,
-        stage: defaultStage,
-
-        // fleetBot: {
-        //   connect: [],
-        // },
+        stage: placementStage,
       },
       include: includeSelect,
     });
-    // console.log('game', result);
-
     return result;
   }
 
@@ -113,21 +99,18 @@ export class GameService {
     return game;
   }
 
-  // async update(
-  //   id: number,
-  //   data: MapUserStartUpdateDto | MapUserStartResetDto | LogUpdateDto,
-  // ) {
-  //   try {
-  //     const result = await this.prisma.game.update({
-  //       where: { id },
-  //       data,
-  //       include: includeSelect,
-  //     });
-  //     return result;
-  //   } catch {
-  //     throw new BadRequestException('Foreign key constraint failed');
-  //   }
-  // }
+  async update(id: number, data: { stage: string }) {
+    try {
+      const result = await this.prisma.game.update({
+        where: { id },
+        data,
+        include: includeSelect,
+      });
+      return result;
+    } catch {
+      throw new BadRequestException('Foreign key constraint failed');
+    }
+  }
 
   // async resetMap(id: number) {
   //   const deleteData = {
