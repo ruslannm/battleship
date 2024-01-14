@@ -1,31 +1,23 @@
 <div class='container m-3'>
-  <form class="row">
-    <div class="col-12 col-sm-4 col-lg-2 text-center">
-      <div class="h6">Выбери корабль, поставь на поле</div>
-      <select
-        id='menu-select'
-        class='form-control'
-        {{!-- multiple='multiple' --}}
-        aria-label='Multiple select example'
-        name='items[]'
-        required
-        size="10"
-      >
-        {{#each rules}}
-          <option class='rule-item' value='{{this.id}}'>{{this.Sheep.name}},
-            {{this.Sheep.length}} кл.</option>
-        {{/each}}
-
-      </select>
-      <button type='submit' class='btn btn-primary mt-2'>Применить</button>
-    </div>
-    <div class="col-12 col-sm-8 col-lg-10">
+  <div class="row">
+       <div class="col-12 col-md-6">
+        <h2> User map</h2>
       {{> map-grid placementUser }}
     </div>
-        <div class="col-12 col-sm-8 col-lg-10">
-      {{> map-grid placementOpponent }}
+    
+        <div class="col-12 col-md-6">
+          <h2>Bot map</h2>
+           <form id="map-opponent-placement" class="row requires-validation" action='/game' , method='post'>
+ 
+          {{> map-opponent-grid placementOpponent }}
+          <div class="col-4">
+          <button id = "submit-placement" type='submit' class='btn btn-outline-success mt-2 ms-2' value="{{gameId}}">
+          Применить
+          </button>
+          </div>
+          </form> 
     </div>
-  </form>
+  </div>
 </div>
 {{!-- <div class='container m-3'>
     {{> map-grid }}

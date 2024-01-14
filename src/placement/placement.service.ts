@@ -97,20 +97,20 @@ export class PlacementService {
             length: true,
           },
         },
-        TakenCells: true,
-        SpaceAroundCells: true,
+        takenCells: true,
+        spaceAroundCells: true,
       },
     });
     // console.log('placement 1', placement, placement.at(0).PlacementLog.at(0));
     const takenCells = [];
     placement.forEach((item) => {
-      item.TakenCells.forEach((cell) => {
+      item.takenCells.forEach((cell) => {
         takenCells.push({ cell: cell.cell, length: item.Ship.length });
       });
     });
     let spaceAroundCells = [];
     placement.forEach((item) => {
-      item.SpaceAroundCells.forEach((cell) => {
+      item.spaceAroundCells.forEach((cell) => {
         spaceAroundCells.push({ cell: cell.cell, length: 0 });
       });
     });
@@ -321,16 +321,16 @@ export class PlacementService {
           gameId,
           shipId,
           userId,
-          TakenCells: {
+          takenCells: {
             create: shipTakenCells,
           },
-          SpaceAroundCells: {
+          spaceAroundCells: {
             create: shipSpaceAroundCells,
           },
         },
         include: {
-          TakenCells: true,
-          SpaceAroundCells: true,
+          takenCells: true,
+          spaceAroundCells: true,
         },
       });
       // console.log('placementNew', placement);

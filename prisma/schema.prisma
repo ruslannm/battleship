@@ -16,9 +16,9 @@ model User {
   username     String      @unique
   password     String
   refreshToken String?
-  Game         Game[]
-  Placement    Placement[]
-  Log          Log[]
+  games        Game[]
+  placements   Placement[]
+  shots        Shot[]
 
   @@map("users")
 }
@@ -28,13 +28,13 @@ model Game {
   stage      String      @default("placement")
   User       User        @relation(fields: [userId], references: [id])
   userId     Int         @map("user_id")
-  logs       Log[]
+  shots      Shot[]
   placements Placement[]
 
   @@map("games")
 }
 
-model Log {
+model Shot {
   id     Int  @id @default(autoincrement())
   Game   Game @relation(fields: [gameId], references: [id])
   gameId Int  @map("game_id")
@@ -42,15 +42,15 @@ model Log {
   userId Int  @map("user_id")
   cell   Int  @default(-1)
 
-  @@map("logs")
+  @@map("shots")
 }
 
 model Ship {
-  id        Int         @id @default(autoincrement())
-  name      String      @unique
-  length    Int
-  Rule      Rule[]
-  Placement Placement[]
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  length     Int
+  rules      Rule[]
+  placements Placement[]
 
   @@map("ships")
 }
@@ -72,8 +72,8 @@ model Placement {
   shipId           Int               @map("sheep_id")
   User             User              @relation(fields: [userId], references: [id])
   userId           Int               @map("user_id")
-  TakenCells       TakenCell[]
-  SpaceAroundCells SpaceAroundCell[]
+  takenCells       TakenCell[]
+  spaceAroundCells SpaceAroundCell[]
 
   @@map("placement")
 }

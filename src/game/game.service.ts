@@ -1,14 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { RuleService } from 'src/rule/rule.service';
-import {
-  MapUserStartResetDto,
-  MapUserStartUpdateDto,
-} from 'src/placement/dto/placement.dto';
-import { LogUpdateDto } from './dto/game.dto';
-import { RuleService } from 'src/rule/rule.service';
+// import {
+//   MapUserStartResetDto,
+//   MapUserStartUpdateDto,
+// } from 'src/placement/dto/placement.dto';
+// import { LogUpdateDto } from './dto/game.dto';
+// import { RuleService } from 'src/rule/rule.service';
 import { closedStage, placementStage } from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
+import { CreateShotDto } from './dto/game.dto';
 
 // const fleetSelect = {
 //   select: {
@@ -23,7 +24,7 @@ import { PlacementService } from 'src/placement/placement.service';
 // };
 
 const includeSelect = {
-  logs: true,
+  shots: true,
 };
 
 const whereFilter = {
@@ -130,4 +131,43 @@ export class GameService {
   //   };
   //   return await this.update(id, logData);
   // }
+
+  async makeShot(data: CreateShotDto, opponentUserId: number) {
+    await this.prisma.shot.create({
+      data,
+    });
+    const { takenCells: takenCellsOpponets } =
+      await this.placementService.getAppliedCells(data.gameId, opponentUserId);
+    if (takenCellsOpponets.includes(data.cell)) {
+      return true;
+    }
+    return false;
+  }
+
+  async makeBotShot(gameId: number, botUserId: number, playerUserId: number) {
+    let resultShot = false;
+    do {
+      const makedShots = await this.prisma.shot.findMany({
+        where: {
+          gameId: gameId,
+          userId: botUserId,
+        },
+      });
+      const makedShotsCells = makedShots.map((item) => item.cell);
+      const cells = [...Array(100).keys()].filter(
+        (item) => !makedShotsCells.includes(item),
+      );
+      const cellsIdx = Math.floor(Math.random() * cells.length);
+      const cell = cells.at(cellsIdx);
+      resultShot = await this.makeShot(
+        {
+          gameId: gameId,
+          userId: botUserId,
+          cell,
+        },
+        playerUserId,
+      );
+    } while (resultShot);
+    return resultShot;
+  }
 }

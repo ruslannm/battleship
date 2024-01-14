@@ -28,6 +28,7 @@ import {
   resultStage,
 } from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
+import { ShotDto } from './dto/game.dto';
 
 @UseGuards(AccessJwtGuard)
 @Controller('game')
@@ -88,21 +89,42 @@ export class GameController {
   }
 
   @Post('')
-  async post(@Req() req: Request, @Res() res: Response): Promise<void> {
+  async post(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: ShotDto,
+  ): Promise<void> {
     const user = req.user as UserValidatedDto;
-    const isAdmin = user.role === 'admin';
-    if (isAdmin) {
-      res.redirect('/');
-    } else {
-      // const player = await this.userService.findById(user.id);
-      const game = await this.gameService.getGameByUserId(user.id);
-      // console.log('game', game);
-      if (game.stage === placementStage) {
-        res.redirect(`/placement`);
-      } else {
-        res.redirect(`/game/${game.id}`);
-      }
+    const game = await this.gameService.getGameByUserId(user.id);
+    if (!game) {
+      res.render('not-found', { isAuth: true });
+      return;
     }
+    const userShot = await this.gameService.makeShot(
+      {
+        gameId: game.id,
+        userId: user.id,
+        cell: dto.cell,
+      },
+      botUserId,
+    );
+    if (userShot) {
+      res.redirect(`/game/${game.id}`);
+    }
+    await this.gameService.makeBotShot(game.id, botUserId, user.id);
+    res.redirect(`/game/${game.id}`);
+    // if (isAdmin) {
+    //   res.redirect('/');
+    // } else {
+    //   // const player = await this.userService.findById(user.id);
+    //   const game = await this.gameService.getGameByUserId(user.id);
+    //   // console.log('game', game);
+    //   if (game.stage === placementStage) {
+    //     res.redirect(`/placement`);
+    //   } else {
+    //     res.redirect(`/game/${game.id}`);
+    //   }
+    // }
   }
 
   @Put('/:id')
