@@ -3,7 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RuleDto } from './dto/rule.dto';
 
 const includeSelect = {
-  Ship: {
+  ship: {
     select: {
       name: true,
       length: true,

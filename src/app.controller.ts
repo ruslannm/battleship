@@ -26,13 +26,21 @@ export class AppController {
   @Get()
   async root(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
-    const game = await this.gameService.getGameByUserId(user.id);
-    const gameButtonText =
-      game.stage === placementStage ? 'Поставить корабли' : 'Играть';
-    res.render('index', {
-      isAuth: true,
-      gameButtonText,
-    });
+    const game = await this.gameService.findByUserId(user.id);
+    if (game) {
+      const gameButtonText =
+        game.stage === placementStage ? 'Поставить корабли' : 'Играть';
+      res.render('index', {
+        isAuth: true,
+        gameButtonText,
+        isPostGame: false,
+      });
+    } else {
+      res.render('index', {
+        isAuth: true,
+        isPostGame: true,
+      });
+    }
 
     // const user = req.user as UserValidatedDto;
     // const isAdmin = user.role === 'admin';

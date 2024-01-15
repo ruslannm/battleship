@@ -37,7 +37,7 @@ export class MapController {
   @Get()
   async render(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
-    const game = await this.gameService.getGameByUserId(user.id);
+    const game = await this.gameService.findByUserId(user.id);
     if (!game) {
       res.render('not-found', { isAuth: true });
       return;
@@ -85,7 +85,7 @@ export class MapController {
 
       // console.log('ruleItem. cells', rule, cells, typeof cells);
       // const player = await this.userService.findById(user.id);
-      const game = await this.gameService.getGameByUserId(user.id);
+      const game = await this.gameService.findByUserId(user.id);
       const placement = await this.placementService.placeShip(
         game.id,
         user.id,
@@ -108,7 +108,7 @@ export class MapController {
   @Delete()
   async deletePlacement(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
-    const game = await this.gameService.getGameByUserId(user.id);
+    const game = await this.gameService.findByUserId(user.id);
     if (!game || !(game.stage === placementStage)) {
       throw new NotFoundException();
     }

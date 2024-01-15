@@ -3,7 +3,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RuleService } from 'src/rule/rule.service';
 import { PlacementDto } from './dto/placement.dto';
 // import { GameService } from 'src/game/game.service';
-import { columnsLegend, rowsLegend } from 'src/constants';
+import {
+  columnsLegend,
+  rowsLegend,
+  takenCellType,
+  spaceAroundCellType,
+} from 'src/constants';
 
 type appliedCell = {
   cell: number;
@@ -14,7 +19,6 @@ type appliedCell = {
 export class PlacementService {
   constructor(
     private readonly prisma: PrismaService,
-    // private readonly gameService: GameService,
     private readonly ruleService: RuleService,
   ) { }
 
@@ -91,28 +95,31 @@ export class PlacementService {
     const placement = await this.prisma.placement.findMany({
       where: { gameId, userId },
       include: {
-        Ship: {
+        ship: {
           select: {
             name: true,
             length: true,
           },
         },
-        takenCells: true,
-        spaceAroundCells: true,
+        cells: true,
       },
     });
-    // console.log('placement 1', placement, placement.at(0).PlacementLog.at(0));
+    // console.log('placement 1', placement, placement.at(0).cells.at(0));
     const takenCells = [];
     placement.forEach((item) => {
-      item.takenCells.forEach((cell) => {
-        takenCells.push({ cell: cell.cell, length: item.Ship.length });
-      });
+      item.cells
+        .filter((cell) => cell.cellType == takenCellType)
+        .forEach((cell) => {
+          takenCells.push({ cell: cell.cell, length: item.ship.length });
+        });
     });
     let spaceAroundCells = [];
     placement.forEach((item) => {
-      item.spaceAroundCells.forEach((cell) => {
-        spaceAroundCells.push({ cell: cell.cell, length: 0 });
-      });
+      item.cells
+        .filter((cell) => cell.cellType === spaceAroundCellType)
+        .forEach((cell) => {
+          spaceAroundCells.push({ cell: cell.cell, length: 0 });
+        });
     });
     spaceAroundCells = [...new Set(spaceAroundCells)];
     return { takenCells, spaceAroundCells };
@@ -124,6 +131,8 @@ export class PlacementService {
       gameId,
       userId,
     );
+    // console.log('takenCells, spaceAroundCells', takenCells, spaceAroundCells);
+
     const availableShips = await this.getAvailableShips(gameId, userId);
     const isFullPlacement = availableShips.length === 0;
     for (let rowIdx: number = 0; rowIdx < 11; rowIdx++) {
@@ -226,7 +235,7 @@ export class PlacementService {
     shipSpaceAroundCells = shipSpaceAroundCells
       .filter((item) => !cells.includes(item))
       .map((item) => {
-        return { cell: item };
+        return { cell: item, cellType: spaceAroundCellType };
       });
 
     return { isFreeAround: true, shipSpaceAroundCells };
@@ -279,8 +288,8 @@ export class PlacementService {
         availableShips.push({
           shipId: item.shipId,
           quantity,
-          name: item.Ship.name,
-          length: item.Ship.length,
+          name: item.ship.name,
+          length: item.ship.length,
         });
       }
     });
@@ -300,7 +309,7 @@ export class PlacementService {
     // console.log(this.isFreeAround(game.mapUserStart, cellsSorted));
     if (
       this.isInRange(shipCells) &&
-      this.isValidForm(rule.Ship.length, shipCells)
+      this.isValidForm(rule.ship.length, shipCells)
       // &&
       // this.isFreeAround(game.mapUserStart, cellsSorted)
     ) {
@@ -313,7 +322,7 @@ export class PlacementService {
         return null;
       }
       const shipTakenCells = shipCells.map((item) => {
-        return { cell: item };
+        return { cell: item, cellType: takenCellType };
       });
 
       const placement = await this.prisma.placement.create({
@@ -321,19 +330,14 @@ export class PlacementService {
           gameId,
           shipId,
           userId,
-          takenCells: {
-            create: shipTakenCells,
-          },
-          spaceAroundCells: {
-            create: shipSpaceAroundCells,
+          cells: {
+            create: [...shipTakenCells, ...shipSpaceAroundCells],
           },
         },
         include: {
-          takenCells: true,
-          spaceAroundCells: true,
+          cells: true,
         },
       });
-      // console.log('placementNew', placement);
       return placement;
     }
     return null;
@@ -441,7 +445,7 @@ export class PlacementService {
           gameId,
           userId,
           shipId: item.shipId,
-          length: item.Ship.length,
+          length: item.ship.length,
         });
       }
     });

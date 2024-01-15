@@ -80,7 +80,11 @@ export class GameController {
   @Get('')
   async renderMany(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
-    const game = await this.gameService.getGameByUserId(user.id);
+    const game = await this.gameService.findByUserId(user.id);
+    if (!game) {
+      res.render('game', { isPostGame: true, isAuth: true });
+      return;
+    }
     if (game.stage === placementStage) {
       res.redirect(`/placement`);
     } else {
@@ -89,43 +93,50 @@ export class GameController {
   }
 
   @Post('')
-  async post(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Body() dto: ShotDto,
-  ): Promise<void> {
+  async post(@Req() req: Request, @Res() res: Response): Promise<void> {
     const user = req.user as UserValidatedDto;
-    const game = await this.gameService.getGameByUserId(user.id);
-    if (!game) {
+    // console.log(req.body);
+    const { first_shooter } = req.body;
+    const game = await this.gameService.findByUserId(user.id);
+    if (game) {
       res.render('not-found', { isAuth: true });
       return;
     }
-    const userShot = await this.gameService.makeShot(
-      {
-        gameId: game.id,
-        userId: user.id,
-        cell: dto.cell,
-      },
-      botUserId,
+    const opponentId = botUserId;
+    const newGame = await this.gameService.create(
+      user.id,
+      opponentId,
+      first_shooter === 'player' ? user.id : opponentId,
     );
-    if (userShot) {
-      res.redirect(`/game/${game.id}`);
-    }
-    await this.gameService.makeBotShot(game.id, botUserId, user.id);
-    res.redirect(`/game/${game.id}`);
-    // if (isAdmin) {
-    //   res.redirect('/');
-    // } else {
-    //   // const player = await this.userService.findById(user.id);
-    //   const game = await this.gameService.getGameByUserId(user.id);
-    //   // console.log('game', game);
-    //   if (game.stage === placementStage) {
-    //     res.redirect(`/placement`);
-    //   } else {
-    //     res.redirect(`/game/${game.id}`);
-    //   }
-    // }
+    res.redirect(`/game/${newGame.id}`);
   }
+
+  //   const userShot = await this.gameService.makeShot(
+  //     {
+  //       gameId: game.id,
+  //       userId: user.id,
+  //       cell: dto.cell,
+  //     },
+  //     botUserId,
+  //   );
+  //   if (userShot) {
+  //     res.redirect(`/game/${game.id}`);
+  //   }
+  //   await this.gameService.makeBotShot(game.id, botUserId, user.id);
+  //   res.redirect(`/game/${game.id}`);
+  //   // if (isAdmin) {
+  //   //   res.redirect('/');
+  //   // } else {
+  //   //   // const player = await this.userService.findById(user.id);
+  //   //   const game = await this.gameService.getGameByUserId(user.id);
+  //   //   // console.log('game', game);
+  //   //   if (game.stage === placementStage) {
+  //   //     res.redirect(`/placement`);
+  //   //   } else {
+  //   //     res.redirect(`/game/${game.id}`);
+  //   //   }
+  //   // }
+  // }
 
   @Put('/:id')
   async goNextStage(

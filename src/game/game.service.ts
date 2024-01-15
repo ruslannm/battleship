@@ -7,7 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 // } from 'src/placement/dto/placement.dto';
 // import { LogUpdateDto } from './dto/game.dto';
 // import { RuleService } from 'src/rule/rule.service';
-import { closedStage, placementStage } from 'src/constants';
+import { closedStage, placementStage, stages } from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
 import { CreateShotDto } from './dto/game.dto';
 
@@ -25,6 +25,7 @@ import { CreateShotDto } from './dto/game.dto';
 
 const includeSelect = {
   shots: true,
+  users: true,
 };
 
 const whereFilter = {
@@ -59,9 +60,17 @@ export class GameService {
   }
 
   async find(data: { id: number; userId: number }) {
+    const whereGameIdUserId = {
+      id: data.id,
+      users: {
+        some: {
+          userId: data.userId,
+        },
+      },
+    };
     return await this.prisma.game.findFirst({
       where: {
-        ...data,
+        ...whereGameIdUserId,
         ...whereFilter,
       },
       include: includeSelect,
@@ -71,34 +80,49 @@ export class GameService {
   async findByUserId(userId: number) {
     return await this.prisma.game.findFirst({
       where: {
-        userId,
+        users: {
+          some: {
+            userId: userId,
+          },
+        },
         ...whereFilter,
       },
       include: includeSelect,
     });
   }
 
-  async create(userId: number) {
+  async create(playerId: number, opponentId: number, firstShooterId: number) {
     const result = await this.prisma.game.create({
       data: {
-        userId,
-        stage: placementStage,
+        users: {
+          create: [
+            {
+              user: { connect: { id: playerId } },
+              isFirstShooter: firstShooterId === playerId,
+            },
+            {
+              user: { connect: { id: opponentId } },
+              isFirstShooter: firstShooterId === opponentId,
+            },
+          ],
+        },
+        stage: stages[0],
       },
       include: includeSelect,
     });
     return result;
   }
 
-  async getGameByUserId(userId: number) {
-    let game = await this.findByUserId(userId);
-    // console.log('getGameByUserId', game);
+  // async getGameByUserId(userId: number) {
+  //   let game = await this.findByUserId(userId);
+  //   // console.log('getGameByUserId', game);
 
-    if (!game) {
-      game = await this.create(userId);
-      await this.placementService.placeShipsByBot(game.id, 0);
-    }
-    return game;
-  }
+  //   if (!game) {
+  //     game = await this.create(userId);
+  //     await this.placementService.placeShipsByBot(game.id, 0);
+  //   }
+  //   return game;
+  // }
 
   async update(id: number, data: { stage: string }) {
     try {

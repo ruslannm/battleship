@@ -11,34 +11,46 @@ datasource db {
 }
 
 model User {
-  id           Int         @id @default(autoincrement())
-  role         String      @default("player")
-  username     String      @unique
-  password     String
-  refreshToken String?
-  games        Game[]
-  placements   Placement[]
-  shots        Shot[]
+  id            Int            @id @default(autoincrement())
+  role          String         @default("player")
+  username      String         @unique
+  password      String
+  refreshToken  String?
+  placements    Placement[]
+  shots         Shot[]
+  winnerInGames Game[]         @relation("winners_in_games")
+  games         UsersInGames[]
 
   @@map("users")
 }
 
 model Game {
-  id         Int         @id @default(autoincrement())
-  stage      String      @default("placement")
-  User       User        @relation(fields: [userId], references: [id])
-  userId     Int         @map("user_id")
+  id         Int            @id @default(autoincrement())
+  stage      String         @default("placement")
+  winner     User?          @relation("winners_in_games", fields: [winnerId], references: [id])
+  winnerId   Int?           @map("winner_id")
   shots      Shot[]
   placements Placement[]
+  users      UsersInGames[]
 
   @@map("games")
 }
 
+model UsersInGames {
+  user           User    @relation(fields: [userId], references: [id])
+  userId         Int     @map("user_id")
+  game           Game    @relation(fields: [gameId], references: [id])
+  gameId         Int     @map("game_id")
+  isFirstShooter Boolean @map("is_first_shooter")
+
+  @@id([userId, gameId])
+}
+
 model Shot {
   id     Int  @id @default(autoincrement())
-  Game   Game @relation(fields: [gameId], references: [id])
+  game   Game @relation(fields: [gameId], references: [id])
   gameId Int  @map("game_id")
-  User   User @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id])
   userId Int  @map("user_id")
   cell   Int  @default(-1)
 
@@ -57,7 +69,7 @@ model Ship {
 
 model Rule {
   id       Int  @id @default(autoincrement())
-  Ship     Ship @relation(fields: [shipId], references: [id])
+  ship     Ship @relation(fields: [shipId], references: [id])
   shipId   Int  @map("ship_id")
   quantity Int
 
@@ -65,33 +77,24 @@ model Rule {
 }
 
 model Placement {
-  id               Int               @id @default(autoincrement())
-  Game             Game              @relation(fields: [gameId], references: [id])
-  gameId           Int               @map("game_id")
-  Ship             Ship              @relation(fields: [shipId], references: [id])
-  shipId           Int               @map("sheep_id")
-  User             User              @relation(fields: [userId], references: [id])
-  userId           Int               @map("user_id")
-  takenCells       TakenCell[]
-  spaceAroundCells SpaceAroundCell[]
+  id     Int    @id @default(autoincrement())
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId Int    @map("game_id")
+  ship   Ship   @relation(fields: [shipId], references: [id])
+  shipId Int    @map("sheep_id")
+  user   User   @relation(fields: [userId], references: [id])
+  userId Int    @map("user_id")
+  cells  Cell[]
 
   @@map("placement")
 }
 
-model TakenCell {
+model Cell {
   id          Int       @id @default(autoincrement())
-  Placement   Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
+  placement   Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
   placementId Int       @map("placement_id")
   cell        Int       @default(-1)
+  cellType    String    @default("taken") @map("cell_type")
 
-  @@map("taken_cells")
-}
-
-model SpaceAroundCell {
-  id          Int       @id @default(autoincrement())
-  Placement   Placement @relation(fields: [placementId], references: [id], onDelete: Cascade)
-  placementId Int       @map("placement_id")
-  cell        Int       @default(-1)
-
-  @@map("space_around_cells")
+  @@map("cells")
 }
