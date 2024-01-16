@@ -38,11 +38,13 @@ export class MapController {
   async render(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
     const game = await this.gameService.findByUserId(user.id);
+    console.log('game', game);
+
     if (!game) {
       res.render('not-found', { isAuth: true });
       return;
     }
-    if (!(game.stage === 'placement')) {
+    if (!(game.stage === placementStage)) {
       res.redirect(`/game/${game.id}`);
       return;
     }

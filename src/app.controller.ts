@@ -18,51 +18,36 @@ const { accessCookiesName } = {
 export class AppController {
   constructor(
     // private readonly orderService: OrderService,
-    private readonly authService: AuthService,
-    private readonly gameService: GameService,
+    private readonly authService: AuthService, // private readonly gameService: GameService,
   ) { }
 
   @UseGuards(AccessJwtGuard)
   @Get()
-  async root(@Req() req: Request, @Res() res: Response) {
-    const user = req.user as UserValidatedDto;
-    const game = await this.gameService.findByUserId(user.id);
-    if (game) {
-      const gameButtonText =
-        game.stage === placementStage ? 'Поставить корабли' : 'Играть';
-      res.render('index', {
-        isAuth: true,
-        gameButtonText,
-        isPostGame: false,
-      });
-    } else {
-      res.render('index', {
-        isAuth: true,
-        isPostGame: true,
-      });
-    }
-
-    // const user = req.user as UserValidatedDto;
-    // const isAdmin = user.role === 'admin';
-    // if (isAdmin) {
-    //   const orders = await this.orderService.findMany();
-    //   res.render('index-admin', {
-    //     isAuth: true,
-    //     isAdmin,
-    //     isOrders: orders.length > 0,
-    //     orders,
-    //   });
-    // } else {
-    //   const orders = await this.orderService.findByUserId(user.id);
-    //   res.render('index-waiter', {
-    //     isAuth: true,
-    //     isUserId: true,
-    //     userId: user.id,
-    //     isOrders: orders.length > 0,
-    //     orders,
-    //   });
-    // }
+  @Render('index')
+  async root() {
+    return { isAuth: true };
   }
+
+  // const user = req.user as UserValidatedDto;
+  // const isAdmin = user.role === 'admin';
+  // if (isAdmin) {
+  //   const orders = await this.orderService.findMany();
+  //   res.render('index-admin', {
+  //     isAuth: true,
+  //     isAdmin,
+  //     isOrders: orders.length > 0,
+  //     orders,
+  //   });
+  // } else {
+  //   const orders = await this.orderService.findByUserId(user.id);
+  //   res.render('index-waiter', {
+  //     isAuth: true,
+  //     isUserId: true,
+  //     userId: user.id,
+  //     isOrders: orders.length > 0,
+  //     orders,
+  //   });
+  // }
 
   @Get('not-found')
   @Render('not-found')

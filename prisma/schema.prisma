@@ -37,20 +37,21 @@ model Game {
 }
 
 model UsersInGames {
-  user           User    @relation(fields: [userId], references: [id])
-  userId         Int     @map("user_id")
-  game           Game    @relation(fields: [gameId], references: [id])
-  gameId         Int     @map("game_id")
-  isFirstShooter Boolean @map("is_first_shooter")
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               Int     @map("user_id")
+  game                 Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId               Int     @map("game_id")
+  isFirstShooter       Boolean @default(false) @map("is_first_shooter")
+  isPlacementCompleted Boolean @default(false) @map("is_placement_completed")
 
-  @@id([userId, gameId])
+  @@id([userId, gameId, isFirstShooter])
 }
 
 model Shot {
   id     Int  @id @default(autoincrement())
-  game   Game @relation(fields: [gameId], references: [id])
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
   gameId Int  @map("game_id")
-  user   User @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int  @map("user_id")
   cell   Int  @default(-1)
 

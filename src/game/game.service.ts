@@ -112,7 +112,22 @@ export class GameService {
     });
     return result;
   }
-
+  async updateUsersInGames(
+    gameId: number,
+    userId: number,
+    isFirstShooter: boolean,
+  ) {
+    await this.prisma.usersInGames.update({
+      where: {
+        userId_gameId_isFirstShooter: {
+          gameId,
+          userId,
+          isFirstShooter,
+        },
+      },
+      data: { isPlacementCompleted: true },
+    });
+  }
   // async getGameByUserId(userId: number) {
   //   let game = await this.findByUserId(userId);
   //   // console.log('getGameByUserId', game);

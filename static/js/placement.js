@@ -75,10 +75,16 @@ function handleResetMap() {
 function handleFixingMap() {
   fetch(`/game/${fixingMapButton.value}`, {
     method: 'PUT',
-  }).then(() => {
-    // console.log('ok');
-    window.location.replace(`/game/${fixingMapButton.value}`);
-  });
+  })
+    .then((responce) => responce.json())
+    .then((result) => {
+      // console.log('ok');
+      if (result['href'] === window.location.href) {
+        window.location.reload();
+      } else {
+        window.location.replace(result['href']);
+      }
+    });
 }
 
 const tooltipTriggerList = [].slice.call(

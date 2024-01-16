@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class ShotDto {
@@ -12,4 +12,10 @@ export class CreateShotDto {
   gameId: number;
   userId: number;
   cell: number;
+}
+
+export class CreateGameDto {
+  @IsNotEmpty()
+  @IsString()
+  first_shooter: string;
 }

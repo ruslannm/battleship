@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Render,
   Req,
   Res,
   UseGuards,
@@ -26,9 +27,10 @@ import {
   gamingStage,
   placementStage,
   resultStage,
+  stages,
 } from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
-import { ShotDto } from './dto/game.dto';
+import { CreateGameDto, ShotDto } from './dto/game.dto';
 
 @UseGuards(AccessJwtGuard)
 @Controller('game')
@@ -78,25 +80,31 @@ export class GameController {
   }
 
   @Get('')
-  async renderMany(@Req() req: Request, @Res() res: Response) {
+  @Render('games')
+  async renderMany(@Req() req: Request) {
     const user = req.user as UserValidatedDto;
     const game = await this.gameService.findByUserId(user.id);
+    const data = { isAuth: true };
     if (!game) {
-      res.render('game', { isPostGame: true, isAuth: true });
-      return;
-    }
-    if (game.stage === placementStage) {
-      res.redirect(`/placement`);
+      data['isPostGame'] = true;
+    } else if (game.stage === placementStage) {
+      data['href'] = '/placement';
+      data['gameButtonText'] = 'Поставить корабли';
     } else {
-      res.redirect(`/game/${game.id}`);
+      data['href'] = `/game/${game.id}`;
+      data['gameButtonText'] = 'Играть';
     }
+    return data;
   }
 
   @Post('')
-  async post(@Req() req: Request, @Res() res: Response): Promise<void> {
+  async post(
+    @Body() dto: CreateGameDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
     const user = req.user as UserValidatedDto;
-    // console.log(req.body);
-    const { first_shooter } = req.body;
+    const { first_shooter } = dto;
     const game = await this.gameService.findByUserId(user.id);
     if (game) {
       res.render('not-found', { isAuth: true });
@@ -108,7 +116,14 @@ export class GameController {
       opponentId,
       first_shooter === 'player' ? user.id : opponentId,
     );
-    res.redirect(`/game/${newGame.id}`);
+    // Бот размещает корабли и делает отметку что готов к игре
+    await this.placementService.placeShipsByBot(newGame.id, opponentId);
+    await this.gameService.updateUsersInGames(
+      newGame.id,
+      opponentId,
+      first_shooter !== 'player',
+    );
+    res.redirect(`/placement`);
   }
 
   //   const userShot = await this.gameService.makeShot(
@@ -156,6 +171,9 @@ export class GameController {
       res.render('not-found', { isAuth: true });
       return;
     }
+    const stageIdx = stages.indexOf(game.stage);
+    console.log('stageIdx', stageIdx, game.stage);
+
     if (game.stage === placementStage) {
       const availableShips = await this.placementService.getAvailableShips(
         game.id,
@@ -165,16 +183,43 @@ export class GameController {
         res.render('not-found', { isAuth: true });
         return;
       }
-      await this.gameService.update(id, { stage: gamingStage });
-      res.status(HttpStatus.OK).json({ gameId: game.id }).send();
-    } else if (game.stage === gamingStage) {
-      await this.gameService.update(id, { stage: resultStage });
+      const userInGames = game.users
+        .filter((item) => item.userId === user.id)
+        .at(0);
+      await this.gameService.updateUsersInGames(
+        game.id,
+        user.id,
+        userInGames.isFirstShooter,
+      );
+      const updatedGame = await this.gameService.find({ id, userId: user.id });
+      const cntUserPlacementCompleted = updatedGame.users.filter(
+        (item) => item.isPlacementCompleted,
+      );
+      console.log('cntUserPlacementCompleted', cntUserPlacementCompleted);
+
+      if (cntUserPlacementCompleted.length < 2) {
+        res.status(HttpStatus.OK).json({ href: `/placement` }).send();
+        return;
+      }
+
+      await this.gameService.update(id, { stage: stages.at(stageIdx + 1) });
+      res
+        .status(HttpStatus.OK)
+        .json({ href: `/game/${game.id}` })
+        .send();
+    } else if (game.stage === stages.at(-1)) {
+      res
+        .status(HttpStatus.OK)
+        .json({ href: `/game/${game.id}` })
+        .send();
+    } else {
+      // переход в следующее состояние
+      const stageIdx = stages.indexOf(game.stage);
+      await this.gameService.update(id, { stage: stages.at(stageIdx + 1) });
+      res
+        .status(HttpStatus.OK)
+        .json({ href: `/game/${game.id}` })
+        .send();
     }
-    return true;
-    // res.render('game', {
-    //   placementUser: [],
-    //   placementOpponent: [],
-    //   isAuth: true,
-    // });
   }
 }
