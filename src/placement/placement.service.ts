@@ -52,26 +52,51 @@ export class PlacementService {
     takenCells: appliedCell[],
     spaceAroundCells: appliedCell[],
     isFullPlacement: boolean,
-  ): { isButton: boolean; isDisabled: boolean; isAxis: boolean } {
+  ): {
+    isButton: boolean;
+    isDisabledCell: boolean;
+    isAxis: boolean;
+    isShip: boolean;
+  } {
     if (columnIdx < 1 || rowIdx < 1) {
-      return { isButton: false, isDisabled: true, isAxis: true };
+      return {
+        isButton: false,
+        isDisabledCell: false,
+        isAxis: true,
+        isShip: false,
+      };
     }
     const takenCellsValues = takenCells.filter(
       (item) => item.cell === this.getCellIdx(rowIdx - 1, columnIdx - 1),
     );
     if (takenCellsValues.length > 0) {
       // console.log('values', takenCellsValues);
-      return { isButton: false, isDisabled: true, isAxis: false };
+      return {
+        isButton: false,
+        isDisabledCell: false,
+        isAxis: false,
+        isShip: true,
+      };
     } else {
       const spaceAroundCellsValues = spaceAroundCells.filter(
         (item) => item.cell === this.getCellIdx(rowIdx - 1, columnIdx - 1),
       );
       if (spaceAroundCellsValues.length > 0) {
         // console.log('values', spaceAroundCellsValues);
-        return { isButton: true, isDisabled: true, isAxis: false };
+        return {
+          isButton: false,
+          isDisabledCell: true,
+          isAxis: false,
+          isShip: false,
+        };
       }
     }
-    return { isButton: true, isDisabled: isFullPlacement, isAxis: false };
+    return {
+      isButton: !isFullPlacement,
+      isDisabledCell: isFullPlacement,
+      isAxis: false,
+      isShip: false,
+    };
   }
 
   private getCellIdx(rowIdx: number, columnIdx: number) {
@@ -81,14 +106,17 @@ export class PlacementService {
   private getRenderMapCellIdx(rowIdx: number, columnIdx: number) {
     if (rowIdx === 0) {
       if (columnIdx === 0) {
-        return 'map-row-col';
+        return { id: 'map-row-col', cell: -1 };
       }
-      return 'map-col-' + columnsLegend.charAt(columnIdx - 1);
+      return { id: 'map-col-' + columnsLegend.charAt(columnIdx - 1), cell: -1 };
     }
     if (columnIdx === 0) {
-      return 'map-row-' + rowsLegend.at(rowIdx - 1);
+      return { id: 'map-row-' + rowsLegend.at(rowIdx - 1), cell: -1 };
     }
-    return this.getCellIdx(rowIdx - 1, columnIdx - 1).toString();
+    return {
+      id: this.getCellIdx(rowIdx - 1, columnIdx - 1).toString(),
+      cell: this.getCellIdx(rowIdx - 1, columnIdx - 1),
+    };
   }
 
   async getAppliedCells(gameId: number, userId: number) {
@@ -138,16 +166,22 @@ export class PlacementService {
     for (let rowIdx: number = 0; rowIdx < 11; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 11; columnIdx++) {
-        const id = this.getRenderMapCellIdx(rowIdx, columnIdx);
+        const { id, cell } = this.getRenderMapCellIdx(rowIdx, columnIdx);
         const text = await this.getCellText(rowIdx, columnIdx, takenCells);
-        const { isButton, isDisabled, isAxis } = this.getCellProps(
+        const cellProps = this.getCellProps(
           rowIdx,
           columnIdx,
           takenCells,
           spaceAroundCells,
           isFullPlacement,
         );
-        row.push({ id, text, isButton, isDisabled, isAxis });
+        row.push({
+          id,
+          text,
+          ...cellProps,
+          cell,
+          color: 'primary',
+        });
       }
       result.push({ row });
     }
@@ -240,15 +274,6 @@ export class PlacementService {
 
     return { isFreeAround: true, shipSpaceAroundCells };
   }
-
-  // DeletegetShipCoordDelete(cells: number[]) {
-  //   const result = cells.map((item) => {
-  //     const rowIdx = Math.floor(item / 10);
-  //     const columnIdx = item % 10;
-  //     return columnsLegend.charAt(columnIdx) + rowsLegend.at(rowIdx).toString();
-  //   });
-  //   return result;
-  // }
 
   private compareNumbers(a: number, b: number) {
     return a - b;

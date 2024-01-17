@@ -53,6 +53,7 @@ export class GameController {
     id: number,
   ) {
     const user = req.user as UserValidatedDto;
+    const opponentId = botUserId;
     // console.log('user', user, 'id', id);
 
     const game = await this.gameService.find({ id, userId: user.id });
@@ -63,18 +64,35 @@ export class GameController {
     if (game.stage === placementStage) {
       res.redirect(`/placement`);
     } else {
-      const placementUser = await this.placementService.getPlacementForRender(
+      const userPlacement = await this.gameService.getUserCurrentPlacement(
         game.id,
         user.id,
+        opponentId,
       );
 
-      const placementOpponent =
-        await this.placementService.getPlacementForRender(game.id, botUserId);
+      const opponentPlacement =
+        await this.gameService.getOpponentCurrentPlacement(
+          game.id,
+          opponentId,
+          user.id,
+        );
+
+      if (!(userPlacement && opponentPlacement)) {
+        res.render('not-found', { isAuth: true });
+        return;
+      }
 
       res.render('game', {
-        placementUser: { map: placementUser },
-        placementOpponent: { map: placementOpponent },
+        userPlacement: { map: userPlacement },
+        opponentPlacement: { map: opponentPlacement },
         isAuth: true,
+        shots: game.shots.map((item) => {
+          return {
+            username: item.user.username,
+            cell: this.gameService.getShotCoord(item.cell),
+          };
+        }),
+        // isPlacementCompleted,
       });
     }
   }
@@ -122,36 +140,10 @@ export class GameController {
       newGame.id,
       opponentId,
       first_shooter !== 'player',
+      { isPlacementCompleted: true },
     );
     res.redirect(`/placement`);
   }
-
-  //   const userShot = await this.gameService.makeShot(
-  //     {
-  //       gameId: game.id,
-  //       userId: user.id,
-  //       cell: dto.cell,
-  //     },
-  //     botUserId,
-  //   );
-  //   if (userShot) {
-  //     res.redirect(`/game/${game.id}`);
-  //   }
-  //   await this.gameService.makeBotShot(game.id, botUserId, user.id);
-  //   res.redirect(`/game/${game.id}`);
-  //   // if (isAdmin) {
-  //   //   res.redirect('/');
-  //   // } else {
-  //   //   // const player = await this.userService.findById(user.id);
-  //   //   const game = await this.gameService.getGameByUserId(user.id);
-  //   //   // console.log('game', game);
-  //   //   if (game.stage === placementStage) {
-  //   //     res.redirect(`/placement`);
-  //   //   } else {
-  //   //     res.redirect(`/game/${game.id}`);
-  //   //   }
-  //   // }
-  // }
 
   @Put('/:id')
   async goNextStage(
@@ -172,7 +164,7 @@ export class GameController {
       return;
     }
     const stageIdx = stages.indexOf(game.stage);
-    console.log('stageIdx', stageIdx, game.stage);
+    // console.log('stageIdx', stageIdx, game.stage);
 
     if (game.stage === placementStage) {
       const availableShips = await this.placementService.getAvailableShips(
@@ -190,18 +182,17 @@ export class GameController {
         game.id,
         user.id,
         userInGames.isFirstShooter,
+        { isPlacementCompleted: true },
       );
       const updatedGame = await this.gameService.find({ id, userId: user.id });
       const cntUserPlacementCompleted = updatedGame.users.filter(
         (item) => item.isPlacementCompleted,
       );
-      console.log('cntUserPlacementCompleted', cntUserPlacementCompleted);
-
+      // console.log('cntUserPlacementCompleted', cntUserPlacementCompleted);
       if (cntUserPlacementCompleted.length < 2) {
         res.status(HttpStatus.OK).json({ href: `/placement` }).send();
         return;
       }
-
       await this.gameService.update(id, { stage: stages.at(stageIdx + 1) });
       res
         .status(HttpStatus.OK)
@@ -221,5 +212,52 @@ export class GameController {
         .json({ href: `/game/${game.id}` })
         .send();
     }
+  }
+
+  @Post('/shot')
+  async shot(
+    @Body() dto: ShotDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const user = req.user as UserValidatedDto;
+    console.log(dto);
+    console.log(user.id);
+    const game = await this.gameService.findByUserId(user.id);
+    if (!game) {
+      res.render('not-found', { isAuth: true });
+      return;
+    }
+    const opponentId = botUserId;
+    const isHit = await this.gameService.makeShot(
+      { userId: user.id, gameId: game.id, cell: dto.cell },
+      opponentId,
+    );
+    console.log('isHit', isHit);
+    if (!isHit) {
+      await this.gameService.makeBotShot(game.id, opponentId, user.id);
+    }
+    res.redirect(`/game/${game.id}`);
+    // const { first_shooter } = dto;
+    // const game = await this.gameService.findByUserId(user.id);
+    // if (game) {
+    //   res.render('not-found', { isAuth: true });
+    //   return;
+    // }
+    // const opponentId = botUserId;
+    // const newGame = await this.gameService.create(
+    //   user.id,
+    //   opponentId,
+    //   first_shooter === 'player' ? user.id : opponentId,
+    // );
+    // // Бот размещает корабли и делает отметку что готов к игре
+    // await this.placementService.placeShipsByBot(newGame.id, opponentId);
+    // await this.gameService.updateUsersInGames(
+    //   newGame.id,
+    //   opponentId,
+    //   first_shooter !== 'player',
+    //   { isPlacementCompleted: true },
+    // );
+    // res.redirect(`/placement`);
   }
 }
