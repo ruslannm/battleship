@@ -83,16 +83,18 @@ export class GameController {
       }
 
       res.render('game', {
-        userPlacement: { map: userPlacement },
-        opponentPlacement: { map: opponentPlacement },
+        userPlacement: { map: userPlacement.userPlacement },
+        opponentPlacement: { map: opponentPlacement.userPlacement },
         isAuth: true,
-        shots: game.shots.map((item) => {
-          return {
-            username: item.user.username,
-            cell: this.gameService.getShotCoord(item.cell),
-          };
-        }),
+        shots: (await this.gameService.getShotReverseOrder(game.id)).slice(
+          0,
+          15,
+        ),
         // isPlacementCompleted,
+        isAllShipHit:
+          userPlacement.isAllShipHit || opponentPlacement.isAllShipHit,
+        winner: game.winner?.username,
+        gameId: game.id,
       });
     }
   }
@@ -224,10 +226,10 @@ export class GameController {
     console.log(dto);
     console.log(user.id);
     const game = await this.gameService.findByUserId(user.id);
-    if (!game) {
-      res.render('not-found', { isAuth: true });
-      return;
-    }
+    // if (!game) {
+    //   res.render('not-found', { isAuth: true });
+    //   return;
+    // }
     const opponentId = botUserId;
     const isHit = await this.gameService.makeShot(
       { userId: user.id, gameId: game.id, cell: dto.cell },
@@ -259,5 +261,28 @@ export class GameController {
     //   { isPlacementCompleted: true },
     // );
     // res.redirect(`/placement`);
+  }
+
+  @Delete('/:id')
+  async close(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param(
+      'id',
+      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND }),
+    )
+    id: number,
+  ) {
+    const user = req.user as UserValidatedDto;
+    // console.log('Delete', user, 'id', id);
+
+    const game = await this.gameService.find({ id, userId: user.id });
+    if (!game) {
+      res.render('not-found', { isAuth: true });
+      return;
+    }
+    const stage = stages.at(-1);
+    await this.gameService.update(id, { stage });
+    res.status(HttpStatus.OK).json({ href: `/game` }).send();
   }
 }

@@ -8,6 +8,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 // import { LogUpdateDto } from './dto/game.dto';
 // import { RuleService } from 'src/rule/rule.service';
 import {
+  botUserId,
   closedStage,
   columnsLegend,
   placementStage,
@@ -32,11 +33,13 @@ import { CreateShotDto } from './dto/game.dto';
 const includeSelect = {
   shots: {
     select: {
+      id: true,
       cell: true,
       user: true,
     },
   },
   users: true,
+  winner: true,
 };
 
 const whereFilter = {
@@ -151,7 +154,7 @@ export class GameService {
   //   return game;
   // }
 
-  async update(id: number, data: { stage: string }) {
+  async update(id: number, data: { stage: string } | { winnerId: number }) {
     try {
       const result = await this.prisma.game.update({
         where: { id },
@@ -189,6 +192,7 @@ export class GameService {
     });
     const { takenCells: takenCellsOpponets } =
       await this.placementService.getAppliedCells(data.gameId, opponentUserId);
+    console.log('takenCellsOpponets', opponentUserId, takenCellsOpponets);
     if (takenCellsOpponets.includes(data.cell)) {
       return true;
     }
@@ -242,6 +246,8 @@ export class GameService {
       game.id,
       userId,
     );
+    let cntShipCell = 0;
+    let cntShipCellHit = 0;
     const opponentShots = shots
       .filter((item) => item.user.id === opponentId)
       .map((item) => item.cell);
@@ -250,13 +256,23 @@ export class GameService {
         if (opponentShots.includes(item.cell)) {
           if (item.text === '') {
             item.text = '-';
+            item.isButton = false;
+            item.isDisabledCell = true;
           } else {
             item.color = 'danger';
+            cntShipCellHit += 1;
           }
+        }
+        if (item.isShip) {
+          cntShipCell += 1;
         }
       });
     });
-    return userPlacement;
+    const isAllShipHit = cntShipCell === cntShipCellHit;
+    if (isAllShipHit) {
+      await this.update(gameId, { winnerId: opponentId });
+    }
+    return { userPlacement, isAllShipHit };
   }
 
   async getOpponentCurrentPlacement(
@@ -264,14 +280,18 @@ export class GameService {
     opponentId: number,
     userId: number,
   ) {
-    const opponentPlacement = await this.getUserCurrentPlacement(
+    const obOpponentPlacement = await this.getUserCurrentPlacement(
       gameId,
       opponentId,
       userId,
     );
-    if (!opponentPlacement) {
-      return opponentPlacement;
+
+    if (!obOpponentPlacement) {
+      return obOpponentPlacement;
     }
+    const { userPlacement: opponentPlacement, isAllShipHit } =
+      obOpponentPlacement;
+    // console.log(opponentPlacement.at(7)['row']);
     opponentPlacement.forEach((row) => {
       row['row'].forEach((item) => {
         if (item.isButton) {
@@ -279,13 +299,43 @@ export class GameService {
           item.isRadio = true;
         }
         if (item.isShip) {
-          if (item.color !== 'danger') {
+          if (item.color === 'danger') {
+            item.text = 'x';
+          } else {
             item.isShip = false;
             item.isRadio = true;
           }
         }
+        if (item.isDisabledCell) {
+          if (!['x', '-'].includes(item.text)) {
+            item.isDisabledCell = false;
+            item.isRadio = true;
+          }
+        }
+        if (isAllShipHit && item.isRadio) {
+          item.isDisabledCell = true;
+          item.isRadio = false;
+        }
       });
     });
-    return opponentPlacement;
+    return { userPlacement: opponentPlacement, isAllShipHit };
   }
+
+  async getShotReverseOrder(gameId: number) {
+    const game = await this.findById(gameId);
+    const shots = game.shots;
+    shots.forEach((item, idx) => {
+      item.id = idx + 1;
+    });
+    shots.sort((a, b) => b.id - a.id);
+    return shots.map((item) => {
+      return {
+        id: item.id,
+        username: item.user.username,
+        cell: this.getShotCoord(item.cell),
+        bgcolor: item.user.id === botUserId ? 'light' : 'white',
+      };
+    });
+  }
+
 }

@@ -1,30 +1,37 @@
 <div class='container m-3'>
   <div class="row">
-       <div class="col-12 col-md-6">
+       <div class="col-12 col-md-6 col-lg-5 col-xl-4">
         <h2> User map</h2>
       {{> map-grid userPlacement }}
     </div>
     
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-6 col-lg-5 col-xl-4">
           <h2>Bot map</h2>
            <form id="map-opponent-placement" class="row requires-validation" action='/game/shot' , method='post'>
  
           {{> map-grid opponentPlacement }}
-          <div class="col-4">
+          {{!-- <div class="col-4"> --}}
+          {{#if isAllShipHit}}
+             <h6 class='mt-2'>Игра завершена, победитель: {{winner}}</h6>
+             <button id = "close-game" type='button' class='btn btn-outline-success mt-2 ms-2' 
+              value="{{gameId}}"
+            >Начать новую игру</button>
+          {{else}}
           <button id = "submit-placement" type='submit' class='btn btn-outline-success mt-2 ms-2' value="{{gameId}}">
           Применить
           </button>
-          </div>
+          {{/if}}
+          {{!-- </div> --}}
           </form> 
     </div>
 
-  <div class='col-12 col-md-12 d-flex flex-column'>
+  <div class='col-10 col-md-6 col-lg-4 col-xl-4 d-flex flex-column'>
     <div class='card'>
       <div class='card-body'>
         <h5 class='card-header'>Выстрелы</h5>
         <ul class='list-unstyled'>
           {{#each shots}}
-            <li>{{this.username}}, {{this.cell}}</li>
+            <li class="bg-{{this.bgcolor}}">{{this.id}} : {{this.username}} -> {{this.cell}}</li>
           {{/each}}
         </ul>
       </div>
@@ -34,3 +41,4 @@
 
   </div>
 </div>
+<script type='text/javascript' src='/js/game.js'></script>
