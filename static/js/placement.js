@@ -62,7 +62,9 @@ const resetMapButton = document.getElementById('reset-map');
 resetMapButton.addEventListener('click', handleResetMap, false);
 
 const fixingMapButton = document.getElementById('fixing-map');
-fixingMapButton.addEventListener('click', handleFixingMap, false);
+if (fixingMapButton) {
+  fixingMapButton.addEventListener('click', handleFixingMap, false);
+}
 
 function handleResetMap() {
   fetch(`/placement`, {
@@ -86,10 +88,3 @@ function handleFixingMap() {
       }
     });
 }
-
-const tooltipTriggerList = [].slice.call(
-  document.querySelectorAll('[data-bs-toggle="tooltip"]'),
-);
-const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-  return new bootstrap.Tooltip(tooltipTriggerEl);
-});

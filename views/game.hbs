@@ -1,12 +1,12 @@
 <div class='container m-3'>
   <div class="row">
        <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-        <h2> User map</h2>
+        <h2><i class="bi bi-person"></i> {{playername}} map</h2>
       {{> map-grid userPlacement }}
     </div>
     
         <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-          <h2>Bot map</h2>
+          <h2><i class="bi bi-robot"></i> {{opponentname}} map</h2>
            <form id="map-opponent-placement" class="row requires-validation" action='/game/shot' , method='post'>
  
           {{> map-grid opponentPlacement }}
@@ -31,7 +31,13 @@
         <h5 class='card-header'>Выстрелы</h5>
         <ul class='list-unstyled'>
           {{#each shots}}
-            <li class="bg-{{this.bgcolor}}">{{this.id}} : {{this.username}} -> {{this.cell}}</li>
+            <li class="bg-{{this.bgcolor}}"></i> {{this.id}} : 
+            {{#if this.isBot}}
+            <i class="bi bi-robot"></i>
+            {{else}}
+            <i class="bi bi-person"></i>
+            {{/if}}
+            {{this.username}} -> {{this.cell}}</li>
           {{/each}}
         </ul>
       </div>

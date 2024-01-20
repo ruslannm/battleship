@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   HttpStatus,
-  NotFoundException,
   Param,
   ParseIntPipe,
   Post,
@@ -22,13 +21,7 @@ import { Response, Request } from 'express';
 import { AccessJwtGuard } from 'src/auth/access-jwt.guard';
 import { UserValidatedDto } from 'src/user/dto/user.dto';
 import { GameService } from './game.service';
-import {
-  botUserId,
-  gamingStage,
-  placementStage,
-  resultStage,
-  stages,
-} from 'src/constants';
+import { botUserId, placementStage, stages } from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
 import { CreateGameDto, ShotDto } from './dto/game.dto';
 
@@ -37,7 +30,6 @@ import { CreateGameDto, ShotDto } from './dto/game.dto';
 export class GameController {
   constructor(
     private readonly userService: UserService,
-    private readonly ruleService: RuleService,
     private readonly gameService: GameService,
     private readonly placementService: PlacementService,
   ) { }
@@ -82,7 +74,14 @@ export class GameController {
         return;
       }
 
+      const playername = (await this.userService.findById(user.id)).username;
+
+      const opponentname = (await this.userService.findById(opponentId))
+        .username;
+
       res.render('game', {
+        playername,
+        opponentname,
         userPlacement: { map: userPlacement.userPlacement },
         opponentPlacement: { map: opponentPlacement.userPlacement },
         isAuth: true,
@@ -224,7 +223,7 @@ export class GameController {
   ): Promise<void> {
     const user = req.user as UserValidatedDto;
     console.log(dto);
-    console.log(user.id);
+    // console.log(user.id);
     const game = await this.gameService.findByUserId(user.id);
     // if (!game) {
     //   res.render('not-found', { isAuth: true });

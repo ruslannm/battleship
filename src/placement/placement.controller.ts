@@ -30,7 +30,7 @@ import { placementStage } from 'src/constants';
 export class MapController {
   constructor(
     private readonly gameService: GameService,
-    private readonly ruleService: RuleService,
+    // private readonly ruleService: RuleService,
     private readonly placementService: PlacementService,
   ) { }
 

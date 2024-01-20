@@ -404,13 +404,20 @@ export class PlacementService {
         this.calculateCell(item.fun, item.multiplier)(startCell)(x),
       );
       const intersection = cells.filter((item) => freeCells.includes(item));
-      if (intersection.length === length) {
+      const isEqualLenth = intersection.length === length;
+      let isEqualRow = item.multiplier === 10 ? true : false;
+      if (item.multiplier === 1) {
+        const rowIdFirstCell = Math.floor(cells.at(0) / 10);
+        const rowIdLastCell = Math.floor(cells.at(-1) / 10);
+        isEqualRow = rowIdFirstCell === rowIdLastCell;
+      }
+      if (isEqualLenth && isEqualRow) {
         arrayShipGeneratedCells.push(cells);
       }
     });
 
     if (arrayShipGeneratedCells.length < 1) {
-      return null;
+      return [];
     }
     const arrayShipGeneratedCellsIdx = Math.floor(
       Math.random() * arrayShipGeneratedCells.length,
@@ -426,12 +433,13 @@ export class PlacementService {
   }) {
     const { gameId, userId, shipId, length } = placementShip;
     // console.log('1');
+    // console.log('1=', gameId, userId, shipId, length);
 
     const { takenCells, spaceAroundCells } = await this.getAppliedCells(
       gameId,
       userId,
     );
-    // console.log('2', takenCells, spaceAroundCells);
+    // console.log('2=', takenCells, spaceAroundCells);
     const appliedCells = [
       ...takenCells.map((item) => item.cell),
       ...spaceAroundCells.map((item) => item.cell),
@@ -439,13 +447,13 @@ export class PlacementService {
     const freeCells = [...Array(100).keys()].filter(
       (cell) => !appliedCells.includes(cell),
     );
-    // console.log('3', freeCells);
+    // console.log('3=', freeCells);
     let cells: number[] = [];
     do {
       cells = this.getShipGeneratedCells(freeCells, length);
-      // console.log('4', cells);
-    } while (cells === null);
-    // console.log('5', cells);
+      // console.log('4=', cells);
+    } while (cells.length < 1);
+    // console.log('5=', cells);
     await this.placeShip(gameId, userId, { shipId, cells });
     return;
   }
@@ -455,6 +463,7 @@ export class PlacementService {
     const { takenCells } = await this.getAppliedCells(gameId, userId);
     // console.log('bot', gameId, userId, takenCells, rules);
     if (takenCells.length > 0) {
+      console.log('takenCells.length > 0');
       return;
     }
     type placement = {

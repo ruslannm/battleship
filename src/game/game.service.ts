@@ -192,8 +192,14 @@ export class GameService {
     });
     const { takenCells: takenCellsOpponets } =
       await this.placementService.getAppliedCells(data.gameId, opponentUserId);
-    console.log('takenCellsOpponets', opponentUserId, takenCellsOpponets);
-    if (takenCellsOpponets.includes(data.cell)) {
+    console.log(
+      'opponentUserId, takenCellsOpponets, data.cell',
+      opponentUserId,
+      takenCellsOpponets,
+      data.cell,
+    );
+    const takenCells = takenCellsOpponets.map((item) => item.cell);
+    if (takenCells.includes(data.cell)) {
       return true;
     }
     return false;
@@ -222,6 +228,7 @@ export class GameService {
         },
         playerUserId,
       );
+      console.log('BOT cell, resultShot', cell, resultShot);
     } while (resultShot);
     return resultShot;
   }
@@ -334,8 +341,8 @@ export class GameService {
         username: item.user.username,
         cell: this.getShotCoord(item.cell),
         bgcolor: item.user.id === botUserId ? 'light' : 'white',
+        isBot: item.user.id === botUserId,
       };
     });
   }
-
 }
