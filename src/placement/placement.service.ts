@@ -27,23 +27,14 @@ export class PlacementService {
     columnIdx: number,
     takenCells: appliedCell[],
   ) {
-    if (columnIdx > 0 && rowIdx > 0) {
-      const values = takenCells.filter(
-        (item) => item.cell === this.getCellIdx(rowIdx - 1, columnIdx - 1),
-      );
-      if (values.length > 0) {
-        return values.at(0).length.toString();
-      } else {
-        return '';
-      }
+    const values = takenCells.filter(
+      (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
+    );
+    if (values.length > 0) {
+      return values.at(0).length.toString();
+    } else {
+      return '';
     }
-    if (rowIdx == 0) {
-      return columnsLegend.charAt(columnIdx - 1);
-    }
-    if (columnIdx == 0) {
-      return rowsLegend.at(rowIdx - 1).toString();
-    }
-    return '';
   }
 
   private getCellProps(
@@ -55,38 +46,26 @@ export class PlacementService {
   ): {
     isButton: boolean;
     isDisabledCell: boolean;
-    isAxis: boolean;
     isShip: boolean;
   } {
-    if (columnIdx < 1 || rowIdx < 1) {
-      return {
-        isButton: false,
-        isDisabledCell: false,
-        isAxis: true,
-        isShip: false,
-      };
-    }
     const takenCellsValues = takenCells.filter(
-      (item) => item.cell === this.getCellIdx(rowIdx - 1, columnIdx - 1),
+      (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
     );
     if (takenCellsValues.length > 0) {
-      // console.log('values', takenCellsValues);
       return {
         isButton: false,
         isDisabledCell: false,
-        isAxis: false,
         isShip: true,
       };
     } else {
       const spaceAroundCellsValues = spaceAroundCells.filter(
-        (item) => item.cell === this.getCellIdx(rowIdx - 1, columnIdx - 1),
+        (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
       );
       if (spaceAroundCellsValues.length > 0) {
         // console.log('values', spaceAroundCellsValues);
         return {
           isButton: false,
           isDisabledCell: true,
-          isAxis: false,
           isShip: false,
         };
       }
@@ -94,7 +73,6 @@ export class PlacementService {
     return {
       isButton: !isFullPlacement,
       isDisabledCell: isFullPlacement,
-      isAxis: false,
       isShip: false,
     };
   }
@@ -104,18 +82,10 @@ export class PlacementService {
   }
 
   private getRenderMapCellIdx(rowIdx: number, columnIdx: number) {
-    if (rowIdx === 0) {
-      if (columnIdx === 0) {
-        return { id: 'map-row-col', cell: -1 };
-      }
-      return { id: 'map-col-' + columnsLegend.charAt(columnIdx - 1), cell: -1 };
-    }
-    if (columnIdx === 0) {
-      return { id: 'map-row-' + rowsLegend.at(rowIdx - 1), cell: -1 };
-    }
+    const cell = this.getCellIdx(rowIdx, columnIdx);
     return {
-      id: this.getCellIdx(rowIdx - 1, columnIdx - 1).toString(),
-      cell: this.getCellIdx(rowIdx - 1, columnIdx - 1),
+      id: cell.toString(),
+      cell,
     };
   }
 
@@ -163,9 +133,9 @@ export class PlacementService {
 
     const availableShips = await this.getAvailableShips(gameId, userId);
     const isFullPlacement = availableShips.length === 0;
-    for (let rowIdx: number = 0; rowIdx < 11; rowIdx++) {
+    for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
       const row = [];
-      for (let columnIdx = 0; columnIdx < 11; columnIdx++) {
+      for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
         const { id, cell } = this.getRenderMapCellIdx(rowIdx, columnIdx);
         const text = await this.getCellText(rowIdx, columnIdx, takenCells);
         const cellProps = this.getCellProps(
@@ -184,6 +154,35 @@ export class PlacementService {
         });
       }
       result.push({ row });
+    }
+    // console.log(result.at(1).row);
+    return result;
+  }
+
+  async getPlacementForRenderNewGame() {
+    const result = [];
+    const isFullPlacement = true;
+    for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
+      const row = [];
+      for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
+        const { id, cell } = this.getRenderMapCellIdx(rowIdx, columnIdx);
+        const text = await this.getCellText(rowIdx, columnIdx, []);
+        const cellProps = this.getCellProps(
+          rowIdx,
+          columnIdx,
+          [],
+          [],
+          isFullPlacement,
+        );
+        row.push({
+          id,
+          text,
+          ...cellProps,
+          cell,
+          color: 'primary',
+        });
+      }
+      result.push({ row, rowNumber: rowIdx + 1 });
     }
     // console.log(result.at(1).row);
     return result;

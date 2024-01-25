@@ -26,7 +26,7 @@ import { PlacementService } from 'src/placement/placement.service';
 import { CreateGameDto, ShotDto } from './dto/game.dto';
 
 @UseGuards(AccessJwtGuard)
-@Controller('game')
+@Controller()
 export class GameController {
   constructor(
     private readonly userService: UserService,
@@ -34,86 +34,70 @@ export class GameController {
     private readonly placementService: PlacementService,
   ) { }
 
-  @Get('/:id')
-  async render(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Param(
-      'id',
-      new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_FOUND }),
-    )
-    id: number,
-  ) {
+  @Get()
+  async render(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
+    // const req.cookies['gameId'];
+    console.log(user);
+
     const opponentId = botUserId;
-    // console.log('user', user, 'id', id);
-
-    const game = await this.gameService.find({ id, userId: user.id });
+    const playername = (await this.userService.findById(user.id)).username;
+    const opponentname = (await this.userService.findById(opponentId)).username;
+    const game = await this.gameService.findByUserId(user.id);
     if (!game) {
-      res.render('not-found', { isAuth: true });
-      return;
-    }
-    if (game.stage === placementStage) {
-      res.redirect(`/placement`);
-    } else {
-      const userPlacement = await this.gameService.getUserCurrentPlacement(
-        game.id,
-        user.id,
-        opponentId,
-      );
-
-      const opponentPlacement =
-        await this.gameService.getOpponentCurrentPlacement(
-          game.id,
-          opponentId,
-          user.id,
-        );
-
-      if (!(userPlacement && opponentPlacement)) {
-        res.render('not-found', { isAuth: true });
-        return;
-      }
-
-      const playername = (await this.userService.findById(user.id)).username;
-
-      const opponentname = (await this.userService.findById(opponentId))
-        .username;
-
-      res.render('game', {
+      const data = {
+        isAuth: true,
         playername,
         opponentname,
-        userPlacement: { map: userPlacement.userPlacement },
-        opponentPlacement: { map: opponentPlacement.userPlacement },
-        isAuth: true,
-        shots: (await this.gameService.getShotReverseOrder(game.id)).slice(
-          0,
-          15,
-        ),
-        // isPlacementCompleted,
-        isAllShipHit:
-          userPlacement.isAllShipHit || opponentPlacement.isAllShipHit,
-        winner: game.winner?.username,
-        gameId: game.id,
-      });
+        userPlacement: {
+          map: await this.placementService.getPlacementForRenderNewGame(),
+        },
+        opponentPlacement: {
+          map: await this.placementService.getPlacementForRenderNewGame(),
+        },
+        isCreateGame: true,
+      };
+      res.render('game', data);
+      return;
     }
-  }
+    // if (game.stage === placementStage) {
+    //   res.redirect(`/placement`);
+    // } else {
+    //   const userPlacement = await this.gameService.getUserCurrentPlacement(
+    //     game.id,
+    //     user.id,
+    //     opponentId,
+    //   );
 
-  @Get('')
-  @Render('games')
-  async renderMany(@Req() req: Request) {
-    const user = req.user as UserValidatedDto;
-    const game = await this.gameService.findByUserId(user.id);
-    const data = { isAuth: true };
-    if (!game) {
-      data['isPostGame'] = true;
-    } else if (game.stage === placementStage) {
-      data['href'] = '/placement';
-      data['gameButtonText'] = 'Поставить корабли';
-    } else {
-      data['href'] = `/game/${game.id}`;
-      data['gameButtonText'] = 'Играть';
-    }
-    return data;
+    //   const opponentPlacement =
+    //     await this.gameService.getOpponentCurrentPlacement(
+    //       game.id,
+    //       opponentId,
+    //       user.id,
+    //     );
+
+    //   if (!(userPlacement && opponentPlacement)) {
+    //     res.render('not-found', { isAuth: true });
+    //     return;
+    //   }
+
+    res.render('game', {
+      playername,
+      opponentname,
+      userPlacement: {
+        map: await this.placementService.getPlacementForRenderNewGame(),
+      },
+      opponentPlacement: {
+        map: await this.placementService.getPlacementForRenderNewGame(),
+      },
+      isAuth: true,
+      shots: (await this.gameService.getShotReverseOrder(game.id)).slice(0, 15),
+      // isPlacementCompleted,
+      // isAllShipHit:
+      //   userPlacement.isAllShipHit || opponentPlacement.isAllShipHit,
+      winner: game.winner?.username,
+      gameId: game.id,
+    });
   }
 
   @Post('')
@@ -123,6 +107,8 @@ export class GameController {
     @Res() res: Response,
   ): Promise<void> {
     const user = req.user as UserValidatedDto;
+    console.log(user);
+
     const { first_shooter } = dto;
     const game = await this.gameService.findByUserId(user.id);
     if (game) {
@@ -135,6 +121,8 @@ export class GameController {
       opponentId,
       first_shooter === 'player' ? user.id : opponentId,
     );
+    console.log('newGame', newGame);
+
     // Бот размещает корабли и делает отметку что готов к игре
     await this.placementService.placeShipsByBot(newGame.id, opponentId);
     await this.gameService.updateUsersInGames(
@@ -143,7 +131,10 @@ export class GameController {
       first_shooter !== 'player',
       { isPlacementCompleted: true },
     );
-    res.redirect(`/placement`);
+    res.cookie('gameId', newGame.id, {
+      httpOnly: true,
+    });
+    res.redirect(`/`);
   }
 
   @Put('/:id')

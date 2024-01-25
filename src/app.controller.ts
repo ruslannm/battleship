@@ -5,9 +5,6 @@ import { Response, Request } from 'express';
 import { AccessJwtGuard } from './auth/access-jwt.guard';
 import { AuthService } from './auth/auth.service';
 import { ConfigService } from '@nestjs/config';
-import { UserValidatedDto } from './user/dto/user.dto';
-import { GameService } from './game/game.service';
-import { placementStage } from './constants';
 
 const configService = new ConfigService();
 const { accessCookiesName } = {
@@ -21,32 +18,11 @@ export class AppController {
     private readonly authService: AuthService, // private readonly gameService: GameService,
   ) { }
 
-  @UseGuards(AccessJwtGuard)
-  @Get()
-  @Render('index')
-  async root() {
-    return { isAuth: true };
-  }
-
-  // const user = req.user as UserValidatedDto;
-  // const isAdmin = user.role === 'admin';
-  // if (isAdmin) {
-  //   const orders = await this.orderService.findMany();
-  //   res.render('index-admin', {
-  //     isAuth: true,
-  //     isAdmin,
-  //     isOrders: orders.length > 0,
-  //     orders,
-  //   });
-  // } else {
-  //   const orders = await this.orderService.findByUserId(user.id);
-  //   res.render('index-waiter', {
-  //     isAuth: true,
-  //     isUserId: true,
-  //     userId: user.id,
-  //     isOrders: orders.length > 0,
-  //     orders,
-  //   });
+  // @UseGuards(AccessJwtGuard)
+  // @Get()
+  // @Render('index')
+  // async root() {
+  //   return { isAuth: true };
   // }
 
   @Get('not-found')
