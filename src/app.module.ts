@@ -12,7 +12,7 @@ import { BadRequestExceptionFilter } from './filters/bad-request.filter';
 import { AuthController } from './auth/auth.controller';
 import { ForbiddenExceptionFilter } from './filters/forbidden.filter';
 import { MapController } from './placement/placement.controller';
-import { RuleService } from './rule/rule.service';
+import { DockService } from './dock/dock.service';
 import { PlacementService } from './placement/placement.service';
 import { GameController } from './game/game.controller';
 import { GameService } from './game/game.service';
@@ -29,7 +29,7 @@ import { GameService } from './game/game.service';
   providers: [
     GameService,
     PlacementService,
-    RuleService,
+    DockService,
     UserService,
     ConfigService,
     {

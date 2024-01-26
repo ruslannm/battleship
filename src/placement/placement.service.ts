@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RuleService } from 'src/rule/rule.service';
+import { DockService } from 'src/dock/dock.service';
 import { PlacementDto } from './dto/placement.dto';
 // import { GameService } from 'src/game/game.service';
 import {
@@ -19,7 +19,7 @@ type appliedCell = {
 export class PlacementService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly ruleService: RuleService,
+    private readonly dockService: DockService,
   ) { }
 
   private async getCellText(
@@ -81,13 +81,13 @@ export class PlacementService {
     return rowIdx * 10 + columnIdx;
   }
 
-  private getRenderMapCellIdx(rowIdx: number, columnIdx: number) {
-    const cell = this.getCellIdx(rowIdx, columnIdx);
-    return {
-      id: cell.toString(),
-      cell,
-    };
-  }
+  // private getRenderMapCellIdx(rowIdx: number, columnIdx: number) {
+  //   const cell = this.getCellIdx(rowIdx, columnIdx);
+  //   return {
+  //     id: cell.toString(),
+  //     cell,
+  //   };
+  // }
 
   async getAppliedCells(gameId: number, userId: number) {
     const placement = await this.prisma.placement.findMany({
@@ -136,7 +136,7 @@ export class PlacementService {
     for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
-        const { id, cell } = this.getRenderMapCellIdx(rowIdx, columnIdx);
+        const cell = this.getCellIdx(rowIdx, columnIdx);
         const text = await this.getCellText(rowIdx, columnIdx, takenCells);
         const cellProps = this.getCellProps(
           rowIdx,
@@ -146,7 +146,6 @@ export class PlacementService {
           isFullPlacement,
         );
         row.push({
-          id,
           text,
           ...cellProps,
           cell,
@@ -165,7 +164,7 @@ export class PlacementService {
     for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
-        const { id, cell } = this.getRenderMapCellIdx(rowIdx, columnIdx);
+        const cell = this.getCellIdx(rowIdx, columnIdx);
         const text = await this.getCellText(rowIdx, columnIdx, []);
         const cellProps = this.getCellProps(
           rowIdx,
@@ -175,7 +174,6 @@ export class PlacementService {
           isFullPlacement,
         );
         row.push({
-          id,
           text,
           ...cellProps,
           cell,
@@ -207,6 +205,10 @@ export class PlacementService {
 
   private isOnOneRow(cells: number[]) {
     return Math.floor(cells.at(0) / 10) === Math.floor(cells.at(-1) / 10);
+  }
+
+  private isOnOneColumn(cells: number[]) {
+    return cells.at(0) % 10 === cells.at(-1) % 10;
   }
 
   private isValidForm(length: number, cells: number[]) {
@@ -297,9 +299,10 @@ export class PlacementService {
 
   async getAvailableShips(gameId: number, userId: number) {
     const installedShips = await this.getInstalledShips(gameId, userId);
-    const rules = await this.ruleService.findMany();
+    const docks = await this.dockService.findMany();
     const availableShips = [];
-    rules.forEach((item) => {
+    let counter = 0;
+    docks.forEach((item) => {
       const isInstalled = installedShips.filter(
         (installed) => installed.shipId === item.shipId,
       );
@@ -309,21 +312,39 @@ export class PlacementService {
           ? item.quantity - isInstalled.at(0).quantity
           : item.quantity;
       if (quantity > 0) {
-        availableShips.push({
-          shipId: item.shipId,
-          quantity,
-          name: item.ship.name,
-          length: item.ship.length,
-        });
+        const row = [];
+        for (let i = 0; i < quantity; i++) {
+          row.push({
+            counter: counter++,
+            length: item.ship.length,
+          });
+        }
+        availableShips.push({ row });
       }
     });
     return availableShips;
   }
 
-  async placeShip(gameId: number, userId: number, dto: PlacementDto) {
-    const { shipId, cells } = dto;
-    const rule = await this.ruleService.findByShipId(shipId);
+  private getShipCells(firstCell: number, secondCell: number) {
+    if (firstCell === secondCell) {
+      return [firstCell];
+    }
+    const shipCells = [firstCell, secondCell].sort(this.compareNumbers);
+    if (this.isOnOneRow(shipCells)) {
+      for (let i = shipCells.at(0); i < shipCells.at(1); i++) {
+        shipCells.push(i);
+      }
+    } else if (this.isOnOneColumn(shipCells)) {
+      for (let i = shipCells.at(0) + 10; i < shipCells.at(1); i = i + 10) {
+        shipCells.push(i);
+      }
+    }
+    return shipCells;
+  }
 
+  async placeShip(gameId: number, userId: number, dto: PlacementDto) {
+    const { length, firstCell, secondCell } = dto;
+    const cells = this.getShipCells(firstCell, secondCell);
     const shipCells = [...new Set(cells)].sort(this.compareNumbers);
     // console.log('cellsSorted', cellsSorted, typeof cellsSorted.at(0));
     // console.log('dto', dto);
@@ -333,7 +354,7 @@ export class PlacementService {
     // console.log(this.isFreeAround(game.mapUserStart, cellsSorted));
     if (
       this.isInRange(shipCells) &&
-      this.isValidForm(rule.ship.length, shipCells)
+      this.isValidForm(length, shipCells)
       // &&
       // this.isFreeAround(game.mapUserStart, cellsSorted)
     ) {
@@ -458,7 +479,7 @@ export class PlacementService {
   }
 
   async placeShipsByBot(gameId: number, userId: number) {
-    const rules = await this.ruleService.findMany();
+    const docks = await this.dockService.findMany();
     const { takenCells } = await this.getAppliedCells(gameId, userId);
     // console.log('bot', gameId, userId, takenCells, rules);
     if (takenCells.length > 0) {
@@ -472,7 +493,7 @@ export class PlacementService {
       length: number;
     };
     const chainShips: placement[] = [];
-    rules.forEach((item) => {
+    docks.forEach((item) => {
       for (let i = 0; i < item.quantity; i++) {
         chainShips.push({
           gameId,

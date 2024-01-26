@@ -1,13 +1,6 @@
 /* label.btn,
 div.my-axis */
 
-label.btn,
-div.mrn-cell {
-  width: 30px;
-  height: 30px;
-  padding: 0;
-}
-
 div.ship {
   height: 30px;
 }
@@ -40,7 +33,7 @@ td.axis {
   text-align: center;
 }
 td.cell > div {
-  width: 30px;
-  height: 30px;
+  width: 29.1px;
+  height: 29.1px;
   padding: 0;
 }

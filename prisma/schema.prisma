@@ -58,34 +58,34 @@ model Shot {
   @@map("shots")
 }
 
-model Ship {
-  id         Int         @id @default(autoincrement())
-  name       String      @unique
-  length     Int
-  rules      Rule[]
-  placements Placement[]
+// model Ship {
+//   id         Int         @id @default(autoincrement())
+//   name       String      @unique
+//   length     Int
+//   docks      Dock[]
+//   placements Placement[]
 
-  @@map("ships")
-}
+//   @@map("ships")
+// }
 
-model Rule {
-  id       Int  @id @default(autoincrement())
-  ship     Ship @relation(fields: [shipId], references: [id])
-  shipId   Int  @map("ship_id")
-  quantity Int
+model Dock {
+  id         Int @id @default(autoincrement())
+  // ship     Ship @relation(fields: [shipId], references: [id])
+  // shipId   Int  @map("ship_id")
+  shipLength Int @map("ship_length")
+  quantity   Int
 
-  @@map("rules")
+  @@map("docks")
 }
 
 model Placement {
-  id     Int    @id @default(autoincrement())
-  game   Game   @relation(fields: [gameId], references: [id])
-  gameId Int    @map("game_id")
-  ship   Ship   @relation(fields: [shipId], references: [id])
-  shipId Int    @map("sheep_id")
-  user   User   @relation(fields: [userId], references: [id])
-  userId Int    @map("user_id")
-  cells  Cell[]
+  id         Int    @id @default(autoincrement())
+  game       Game   @relation(fields: [gameId], references: [id])
+  gameId     Int    @map("game_id")
+  shipLength Int    @map("ship_length")
+  user       User   @relation(fields: [userId], references: [id])
+  userId     Int    @map("user_id")
+  cells      Cell[]
 
   @@map("placement")
 }

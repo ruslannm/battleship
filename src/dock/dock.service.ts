@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RuleDto } from './dto/rule.dto';
+// import { RuleDto } from './dto/rule.dto';
 
 const includeSelect = {
   ship: {
@@ -12,17 +12,17 @@ const includeSelect = {
 };
 
 @Injectable()
-export class RuleService {
+export class DockService {
   constructor(private readonly prisma: PrismaService) { }
 
   async findMany() {
-    return this.prisma.rule.findMany({
+    return this.prisma.dock.findMany({
       include: includeSelect,
     });
   }
 
   async findById(id: number) {
-    return await this.prisma.rule.findFirst({
+    return await this.prisma.dock.findFirst({
       where: {
         id,
       },
@@ -31,7 +31,7 @@ export class RuleService {
   }
 
   async findByShipId(shipId: number) {
-    return await this.prisma.rule.findFirst({
+    return await this.prisma.dock.findFirst({
       where: {
         shipId,
       },

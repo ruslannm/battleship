@@ -15,8 +15,6 @@ import {
 } from '@nestjs/common';
 // import { OrderService } from './game.service';
 // import { OrderDto } from './dto/order.dto';
-import { UserService } from 'src/user/user.service';
-import { RuleService } from 'src/rule/rule.service';
 import { Response, Request } from 'express';
 import { AccessJwtGuard } from 'src/auth/access-jwt.guard';
 import { UserValidatedDto } from 'src/user/dto/user.dto';
@@ -26,7 +24,7 @@ import { PlacementDto } from 'src/placement/dto/placement.dto';
 import { placementStage } from 'src/constants';
 
 @UseGuards(AccessJwtGuard)
-@Controller('placement')
+@Controller('placements')
 export class MapController {
   constructor(
     private readonly gameService: GameService,
@@ -79,32 +77,27 @@ export class MapController {
     // const dto = req.body;
     console.log('dto', dto);
     const user = req.user as UserValidatedDto;
-    const isAdmin = user.role === 'admin';
-    if (isAdmin) {
-      res.redirect('/');
-    } else {
-      // console.log('body', req.body);
+    // console.log('body', req.body);
 
-      // console.log('ruleItem. cells', rule, cells, typeof cells);
-      // const player = await this.userService.findById(user.id);
-      const game = await this.gameService.findByUserId(user.id);
-      const placement = await this.placementService.placeShip(
-        game.id,
-        user.id,
-        dto,
-      );
-      // console.log('newGame', newGame);
-      if (placement) {
-        res.redirect(`/placement`);
-      } else {
-        res.redirect(`/#game-rules`);
-      }
-      // console.log('game', game);
-      // if (game.status === 'placement') {
-      //   res.redirect(`game/${game.id}/map`);
-      // }
-      // res.redirect(`/map`);
+    // console.log('ruleItem. cells', rule, cells, typeof cells);
+    // const player = await this.userService.findById(user.id);
+    const game = await this.gameService.findByUserId(user.id);
+    const placement = await this.placementService.placeShip(
+      game.id,
+      user.id,
+      dto,
+    );
+    // console.log('newGame', newGame);
+    if (placement) {
+      res.redirect(`/placement`);
+    } else {
+      res.redirect(`/#game-rules`);
     }
+    // console.log('game', game);
+    // if (game.status === 'placement') {
+    //   res.redirect(`game/${game.id}/map`);
+    // }
+    // res.redirect(`/map`);
   }
 
   @Delete()

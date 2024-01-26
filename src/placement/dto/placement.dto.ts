@@ -5,14 +5,15 @@ export class PlacementDto {
   @IsNotEmpty()
   @IsInt()
   @Transform(({ value }) => Number(value))
-  shipId: number;
-  @IsArray()
-  @Transform(({ value }) =>
-    typeof value === 'string'
-      ? [Number(value)]
-      : value.map((item) => Number(item)),
-  )
-  cells: number[];
+  length: number;
+  @IsNotEmpty()
+  @IsInt()
+  @Transform(({ value }) => Number(value))
+  firstCell: number;
+  @IsNotEmpty()
+  @IsInt()
+  @Transform(({ value }) => Number(value))
+  secondCell: number;
 }
 
 class RuleDto {

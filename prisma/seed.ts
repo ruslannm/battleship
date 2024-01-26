@@ -39,60 +39,31 @@ const dataUsers: user[] = [
   },
 ];
 
-type ship = {
+type dock = {
   id: number;
-  name: string;
-  length: number;
-};
-
-const dataShips: ship[] = [
-  {
-    id: 1,
-    name: 'линкор',
-    length: 4,
-  },
-  {
-    id: 2,
-    name: 'крейсер',
-    length: 3,
-  },
-  {
-    id: 3,
-    name: 'эсминец',
-    length: 2,
-  },
-  {
-    id: 4,
-    name: 'катер',
-    length: 1,
-  },
-];
-
-type rule = {
-  id: number;
-  shipId: number;
+  shipLength: number;
   quantity: number;
 };
 
-const rules: rule[] = [
+const docks: dock[] = [
   {
     id: 1,
-    shipId: 1,
+    shipLength: 4,
     quantity: 1,
   },
   {
     id: 2,
-    shipId: 2,
+    shipLength: 3,
     quantity: 2,
   },
   {
     id: 3,
-    shipId: 3,
+    shipLength: 2,
     quantity: 3,
   },
   {
     id: 4,
-    shipId: 4,
+    shipLength: 1,
     quantity: 4,
   },
 ];
@@ -106,20 +77,12 @@ Promise.all([
       create: item,
     });
   }),
-  ...dataShips.map(async (item: ship) => {
-    const { id, ...data } = item;
-    await prisma.ship.upsert({
-      where: { id },
-      update: data,
-      create: item,
-    });
-  }),
 ])
   .then(() => {
     Promise.all(
-      rules.map(async (item: rule) => {
+      docks.map(async (item: dock) => {
         const { id, ...data } = item;
-        await prisma.rule.upsert({
+        await prisma.dock.upsert({
           where: { id },
           update: data,
           create: item,

@@ -16,7 +16,6 @@ import {
 // import { OrderService } from './game.service';
 // import { OrderDto } from './dto/order.dto';
 import { UserService } from 'src/user/user.service';
-import { RuleService } from 'src/rule/rule.service';
 import { Response, Request } from 'express';
 import { AccessJwtGuard } from 'src/auth/access-jwt.guard';
 import { UserValidatedDto } from 'src/user/dto/user.dto';
@@ -80,12 +79,19 @@ export class GameController {
     //     res.render('not-found', { isAuth: true });
     //     return;
     //   }
+    const availableShips = await this.placementService.getAvailableShips(
+      game.id,
+      user.id,
+    );
 
     res.render('game', {
       playername,
       opponentname,
       userPlacement: {
-        map: await this.placementService.getPlacementForRenderNewGame(),
+        map: await this.placementService.getPlacementForRender(
+          game.id,
+          user.id,
+        ),
       },
       opponentPlacement: {
         map: await this.placementService.getPlacementForRenderNewGame(),
@@ -97,6 +103,7 @@ export class GameController {
       //   userPlacement.isAllShipHit || opponentPlacement.isAllShipHit,
       winner: game.winner?.username,
       gameId: game.id,
+      availableShips: { docks: availableShips },
     });
   }
 

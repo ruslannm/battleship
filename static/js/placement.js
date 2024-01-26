@@ -1,90 +1,106 @@
-function isGroupChecked(data, groupName) {
-  let result = false;
-  data.forEach(function (item) {
-    if (item['name'] === groupName) {
-      result = true;
-    }
-  });
-  return result;
-}
+const { ShutdownSignal } = require('@nestjs/common');
 
-function handleCheck(data, event, element, groupName) {
-  if (isGroupChecked(data, groupName)) {
-    element.style.display = 'none';
-  } else {
-    element.style.display = '';
-    event.preventDefault();
-    event.stopPropagation();
-  }
-}
+const ship = {
+  element: false,
+  length: false,
+  firstCell: false,
+  secondCell: false,
+};
+const shipElements = document.querySelectorAll('.ship');
+// console.log(ship);
+shipElements.forEach((element) => {
+  element.addEventListener('click', handleChooseShip, false);
+});
 
-function serializeForm(formNode) {
-  const { elements } = formNode;
-  const data = Array.from(elements)
-    .map((element) => {
-      const { name, type, value } = element;
-      const checked =
-        type === 'checkbox' || type === 'radio'
-          ? element.checked
-          : element.value;
-      return { name, value, checked };
-    })
-    .filter((item) => !!item.name)
-    .filter((item) => item.checked === true);
-  return data;
-}
-
-function handleFormSubmit(event) {
-  // if (submitMapButton.innerText === 'Начать игру') {
-  //   // console.log('submitMapButton', submitMapButton);
-  //   // console.log(`submitMapButton=${submitMapButton.innerText}=`);
-  //   // console.log(`value=${submitMapButton.value}=`);
-  //   // console.log(`/game/${submitMapButton.value}`);
-  //   window.location.replace(`/game/${submitPlacementButton.value}`);
-  //   event.preventDefault();
-  //   event.stopPropagation();
-  //   return;
-  // }
-  const data = serializeForm(mapPlacementForm);
-  handleCheck(data, event, ruleInvalidMessage, 'shipId');
-  handleCheck(data, event, cellsInvalidMessage, 'cells');
-}
-
-const ruleInvalidMessage = document.getElementById('rule-invalid-message');
-const cellsInvalidMessage = document.getElementById('cells-invalid-message');
-
-// const submitPlacementButton = document.getElementById('submit-placement');
-
-const mapPlacementForm = document.getElementById('map-placement');
-mapPlacementForm.addEventListener('submit', handleFormSubmit, false);
-
-const resetMapButton = document.getElementById('reset-map');
-resetMapButton.addEventListener('click', handleResetMap, false);
-
-const fixingMapButton = document.getElementById('fixing-map');
-if (fixingMapButton) {
-  fixingMapButton.addEventListener('click', handleFixingMap, false);
-}
-
-function handleResetMap() {
-  fetch(`/placement`, {
-    method: 'DELETE',
-  }).then(() => {
-    window.location.reload();
+function removeButtonClasses(elements) {
+  elements.forEach((element) => {
+    ['btn', 'btn-primary', 'btn-outline-primary', 'rounded-0'].forEach((cl) =>
+      element.classList.remove(cl),
+    );
   });
 }
 
-function handleFixingMap() {
-  fetch(`/game/${fixingMapButton.value}`, {
-    method: 'PUT',
-  })
-    .then((responce) => responce.json())
-    .then((result) => {
-      // console.log('ok');
-      if (result['href'] === window.location.href) {
-        window.location.reload();
-      } else {
-        window.location.replace(result['href']);
-      }
+function addButtonClasses(elements) {
+  addClasses(elements, ['btn', 'btn-outline-primary', 'rounded-0']);
+}
+
+function addClasses(elements, classes) {
+  elements.forEach((element) => {
+    classes.forEach((cl) => element.classList.add(cl));
+  });
+}
+function addDivClasses(elements) {
+  addClasses(elements, ['border', 'border-primary']);
+}
+
+function handleChooseShip(event) {
+  const id = event.target.id;
+  const shipElement = document.getElementById(id);
+  const isPressed = shipElement.classList.contains('btn-primary');
+  if (isPressed) {
+    shipElement.classList.remove('btn-primary');
+    shipElement.classList.add('btn-outline-primary');
+    ship.element = false;
+    ship.length = false;
+    removeButtonClasses(cellElements);
+    cellElements.forEach((element) => {
+      element.removeEventListener('click', handleChooseCell, false);
     });
+  } else {
+    shipElements.forEach((element) => {
+      element.classList.remove('btn-primary');
+      element.classList.add('btn-outline-primary');
+    });
+    shipElement.classList.remove('btn-outline-primary');
+    shipElement.classList.add('btn-primary');
+    ship.length = shipElement.getAttribute('value');
+    ship.element = shipElement;
+    addButtonClasses(cellElements);
+    cellElements.forEach((element) => {
+      element.addEventListener('click', handleChooseCell, false);
+    });
+  }
+  console.log(ship);
+}
+
+const cellElements = document.querySelectorAll('.btn-cell');
+// cellElements.forEach((element) => {
+//   element.addEventListener('click', handleChooseCell, false);
+// });
+
+function handleChooseCell(event) {
+  const id = event.target.id;
+  const cellElement = document.getElementById(id);
+  cellElement.classList.remove('btn-outline-primary');
+  cellElement.classList.add('btn-primary');
+  if (ship.firstCell) {
+    ship.secondCell = cellElement.getAttribute('value');
+    console.log('Пробуем поставить корабль');
+    handlePlaceShip();
+  } else {
+    console.log('выбрали первую клетку');
+    ship.firstCell = cellElement.getAttribute('value');
+    removeButtonClasses(shipElements);
+    addDivClasses(shipElements);
+    ship.element.classList.add('bg-primary');
+    shipElements.forEach((element) => {
+      element.removeEventListener('click', handleChooseShip, false);
+    });
+  }
+  console.log(ship);
+}
+
+function handlePlaceShip() {
+  fetch(`/placements}`, {
+    method: 'POST',
+    body: JSON.stringify({
+      length: ship.length,
+      firstCell: ship.firstCell,
+      secondCell: ship.secondCell,
+    }),
+  })
+    .then(() => {
+      window.location.reload();
+    })
+    .catch((e) => console.log('Error', e));
 }

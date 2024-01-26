@@ -13,16 +13,20 @@
     <td class='axis'>К</td>
   </tr>
   {{#each map}}
-    <tr>
-      <td class='axis'>{{this.rowNumber}}</td>
-      {{#each this.row}}
-        <td class='cell border border-primary'>
-          {{#if isButton}}
-            <div class='btn btn-outline-primary rounded-0'>
-            </div>
-          {{/if}}
-        </td>
-      {{/each}}
-    </tr>
+  <tr>
+    <td class='axis'>{{this.rowNumber}}</td>
+    {{#each this.row}}
+    <td class='cell border border-primary'>
+      {{#if isButton}}
+      <div id="cell-{{this.cell}}" class='btn-cell' value="{{this.cell}}">
+      </div>
+      {{/if}}
+      {{#if isShip}}
+      <div id="cell-{{this.cell}}" class="ship ship-good" value="{{this.cell}}">{{this.text}}
+      </div>
+      {{/if}}
+    </td>
+    {{/each}}
+  </tr>
   {{/each}}
 </table>

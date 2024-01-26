@@ -11,7 +11,7 @@
       {{!-- {{> map-grid userPlacement }} --}}
       {{> map userPlacement}}
       {{#unless isCreateGame}}
-      {{> dock }}
+      {{> dock availableShips}}
       {{/unless}}
     </div>
 
@@ -58,4 +58,5 @@
 
   </div>
 </div>
+<script type='text/javascript' src='/js/placement.js'></script>
 <script type='text/javascript' src='/js/game.js'></script>
