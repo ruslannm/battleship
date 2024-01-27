@@ -33,42 +33,6 @@ export class MapController {
     private readonly placementService: PlacementService,
   ) { }
 
-  @Get()
-  async render(@Req() req: Request, @Res() res: Response) {
-    const user = req.user as UserValidatedDto;
-    const game = await this.gameService.findByUserId(user.id);
-    console.log('game', game);
-
-    if (!game) {
-      res.render('not-found', { isAuth: true });
-      return;
-    }
-    if (!(game.stage === placementStage)) {
-      res.redirect(`/game/${game.id}`);
-      return;
-    }
-
-    const placement = await this.placementService.getPlacementForRender(
-      game.id,
-      user.id,
-    );
-
-    const availableShips = await this.placementService.getAvailableShips(
-      game.id,
-      user.id,
-    );
-    res.render('placement', {
-      gameId: game.id,
-      availableShips,
-      isSubmitDisabled: availableShips.length === 0,
-      // submitText: availableShips.length === 0 ? 'Начать игру' : 'Применить',
-      isResetDisabled: game.stage !== placementStage,
-      // Log: game.logs.slice(-10),
-      map: placement,
-      isAuth: true,
-    });
-  }
-
   @Post()
   async post(
     @Req() req: Request,

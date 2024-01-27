@@ -241,95 +241,6 @@ export class GameService {
     return columnsLegend.charAt(columnIdx) + rowsLegend.at(rowIdx).toString();
   }
 
-  async getUserCurrentPlacement(
-    gameId: number,
-    userId: number,
-    opponentId: number,
-  ) {
-    const game = await this.find({ id: gameId, userId });
-    if (!game) {
-      return false;
-    }
-    const shots = game.shots;
-    const userPlacement = await this.placementService.getPlacementForRender(
-      game.id,
-      userId,
-    );
-    let cntShipCell = 0;
-    let cntShipCellHit = 0;
-    const opponentShots = shots
-      .filter((item) => item.user.id === opponentId)
-      .map((item) => item.cell);
-    userPlacement.forEach((row) => {
-      row['row'].forEach((item) => {
-        if (opponentShots.includes(item.cell)) {
-          if (item.text === '') {
-            item.text = '-';
-            item.isButton = false;
-            item.isDisabledCell = true;
-          } else {
-            item.color = 'danger';
-            cntShipCellHit += 1;
-          }
-        }
-        if (item.isShip) {
-          cntShipCell += 1;
-        }
-      });
-    });
-    const isAllShipHit = cntShipCell === cntShipCellHit;
-    if (isAllShipHit) {
-      await this.update(gameId, { winnerId: opponentId });
-    }
-    return { userPlacement, isAllShipHit };
-  }
-
-  async getOpponentCurrentPlacement(
-    gameId: number,
-    opponentId: number,
-    userId: number,
-  ) {
-    const obOpponentPlacement = await this.getUserCurrentPlacement(
-      gameId,
-      opponentId,
-      userId,
-    );
-
-    if (!obOpponentPlacement) {
-      return obOpponentPlacement;
-    }
-    const { userPlacement: opponentPlacement, isAllShipHit } =
-      obOpponentPlacement;
-    // console.log(opponentPlacement.at(7)['row']);
-    opponentPlacement.forEach((row) => {
-      row['row'].forEach((item) => {
-        if (item.isButton) {
-          item.isButton = false;
-          item.isRadio = true;
-        }
-        if (item.isShip) {
-          if (item.color === 'danger') {
-            item.text = 'x';
-          } else {
-            item.isShip = false;
-            item.isRadio = true;
-          }
-        }
-        if (item.isDisabledCell) {
-          if (!['x', '-'].includes(item.text)) {
-            item.isDisabledCell = false;
-            item.isRadio = true;
-          }
-        }
-        if (isAllShipHit && item.isRadio) {
-          item.isDisabledCell = true;
-          item.isRadio = false;
-        }
-      });
-    });
-    return { userPlacement: opponentPlacement, isAllShipHit };
-  }
-
   async getShotReverseOrder(gameId: number) {
     const game = await this.findById(gameId);
     const shots = game.shots;
@@ -378,5 +289,81 @@ export class GameService {
       userId,
     );
     return availableShips.length === 0;
+  }
+
+  getButtons(gameId: number, userId: number, stage: string) {
+    if (stage === createGameStage) {
+      return [];
+    }
+    if (stage === placementStage) {
+      if (userId === botUserId) {
+        return [];
+      }
+      // определить поля свободные от кораблей и отчуждений
+      return [];
+    }
+    if (stage === gamingStage) {
+      if (userId !== botUserId) {
+        return [];
+      }
+      // поля по которым не стрелял
+      return [];
+    }
+    return [];
+  }
+
+  getGoodShip(gameId: number, userId: number, stage: string) {
+    if (stage === createGameStage) {
+      return [];
+    }
+    if (stage === placementStage) {
+      if (userId === botUserId) {
+        return [];
+      }
+      // определить поля
+      return [];
+    }
+    if (stage === gamingStage) {
+      if (userId === botUserId) {
+        return []; //всегда пусто
+      }
+      // неподбитые корабли
+      return [];
+    }
+    return [];
+  }
+
+  getBadShip(gameId: number, userId: number, stage: string) {
+    if (stage === createGameStage) {
+      return [];
+    }
+    if (stage === placementStage) {
+      return []; // всегда пусто
+    }
+    if (stage === gamingStage) {
+      if (userId === botUserId) {
+        return []; //рассчитать
+      }
+      // подбитые корабли
+      return [];
+    }
+    return [];
+  }
+
+  getMissingCell(gameId: number, userId: number, stage: string) {
+    if (stage === createGameStage) {
+      return [];
+    }
+    if (stage === placementStage) {
+      return []; // всегда пусто
+    }
+    if (stage === gamingStage) {
+      if (userId === botUserId) {
+        return []; //рассчитать
+      }
+      // рассчитать
+      return [];
+    }
+    return [];
   }
 }

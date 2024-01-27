@@ -1,4 +1,4 @@
-import { spaceAroundCellType } from 'src/constants';
+import { botUserId, placementStage, spaceAroundCellType } from 'src/constants';
 
 type appliedCell = {
   cell: number;
@@ -104,19 +104,24 @@ export function getCellProps(
   columnIdx: number,
   takenCells: appliedCell[],
   spaceAroundCells: appliedCell[],
-  isFullPlacement: boolean,
+  stage: string,
+  userId: number,
 ): {
   isButton: boolean;
-  isDisabledCell: boolean;
   isShip: boolean;
 } {
+  if (stage === placementStage && userId === botUserId) {
+    return {
+      isButton: false,
+      isShip: false,
+    };
+  }
   const takenCellsValues = takenCells.filter(
     (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
   );
   if (takenCellsValues.length > 0) {
     return {
       isButton: false,
-      isDisabledCell: false,
       isShip: true,
     };
   } else {
@@ -127,14 +132,12 @@ export function getCellProps(
       // console.log('values', spaceAroundCellsValues);
       return {
         isButton: false,
-        isDisabledCell: true,
         isShip: false,
       };
     }
   }
   return {
-    isButton: !isFullPlacement,
-    isDisabledCell: isFullPlacement,
+    isButton: true,
     isShip: false,
   };
 }
@@ -174,4 +177,3 @@ export function getShipCells(firstCell: number, secondCell: number) {
   }
   return shipCells;
 }
-

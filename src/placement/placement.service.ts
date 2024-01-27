@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { DockService } from 'src/dock/dock.service';
 import { PlaceShipDto, PlacementDto } from './dto/placement.dto';
-import { takenCellType, spaceAroundCellType } from 'src/constants';
+import {
+  takenCellType,
+  spaceAroundCellType,
+  createGameStage,
+} from 'src/constants';
 import * as utils from './placement.utils';
 
 @Injectable()
@@ -40,16 +44,17 @@ export class PlacementService {
     return { takenCells, spaceAroundCells };
   }
 
-  async getPlacementForRender(gameId: number, userId: number) {
+  async getPlacementForRender(gameId: number, userId: number, stage: string) {
     const result = [];
-    const { takenCells, spaceAroundCells } = await this.getAppliedCells(
-      gameId,
-      userId,
-    );
+    let takenCells = [];
+    let spaceAroundCells = [];
+    if (stage !== createGameStage) {
+      const appliedCells = await this.getAppliedCells(gameId, userId);
+      takenCells = appliedCells['takenCells'];
+      spaceAroundCells = appliedCells['spaceAroundCells'];
+    }
     // console.log('takenCells, spaceAroundCells', takenCells, spaceAroundCells);
 
-    const availableShips = await this.getAvailableShips(gameId, userId);
-    const isFullPlacement = availableShips.length === 0;
     for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
@@ -60,35 +65,8 @@ export class PlacementService {
           columnIdx,
           takenCells,
           spaceAroundCells,
-          isFullPlacement,
-        );
-        row.push({
-          text,
-          ...cellProps,
-          cell,
-          color: 'primary',
-        });
-      }
-      result.push({ row, rowNumber: rowIdx + 1 });
-    }
-    // console.log(result.at(1).row);
-    return result;
-  }
-
-  async getPlacementForRenderNewGame() {
-    const result = [];
-    const isFullPlacement = true;
-    for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
-      const row = [];
-      for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
-        const cell = utils.getCellIdx(rowIdx, columnIdx);
-        const text = utils.getCellText(rowIdx, columnIdx, []);
-        const cellProps = utils.getCellProps(
-          rowIdx,
-          columnIdx,
-          [],
-          [],
-          isFullPlacement,
+          stage,
+          userId,
         );
         row.push({
           text,

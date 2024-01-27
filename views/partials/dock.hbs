@@ -1,10 +1,15 @@
-<h3 class='my-3'>Выбери корабль</h3>
-{{#each docks}}
-<div class='row mb-3'>
-  {{#each this.row}}
-  <div id="ship-{{this.counter}}" class='btn btn-outline-primary rounded-0 ship ship-{{this.length}} me-3'
-    value="{{this.length}}">
+<div class='card my-3'>
+  <div class='card-body'>
+    <h5 class='card-header'>Выбери корабль</h5>
+
+    {{#each docks}}
+    <div class='row mb-3'>
+      {{#each this.row}}
+      <div id="ship-{{this.counter}}" class='btn btn-outline-primary rounded-0 ship ship-{{this.length}} me-3'
+        value="{{this.length}}">
+      </div>
+      {{/each}}
+    </div>
+    {{/each}}
   </div>
-  {{/each}}
 </div>
-{{/each}}
