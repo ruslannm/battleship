@@ -1,8 +1,6 @@
-const { ShutdownSignal } = require('@nestjs/common');
-
 const ship = {
   element: false,
-  length: false,
+  shipLength: false,
   firstCell: false,
   secondCell: false,
 };
@@ -41,7 +39,7 @@ function handleChooseShip(event) {
     shipElement.classList.remove('btn-primary');
     shipElement.classList.add('btn-outline-primary');
     ship.element = false;
-    ship.length = false;
+    ship.shipLength = false;
     removeButtonClasses(cellElements);
     cellElements.forEach((element) => {
       element.removeEventListener('click', handleChooseCell, false);
@@ -53,7 +51,7 @@ function handleChooseShip(event) {
     });
     shipElement.classList.remove('btn-outline-primary');
     shipElement.classList.add('btn-primary');
-    ship.length = shipElement.getAttribute('value');
+    ship.shipLength = shipElement.getAttribute('value');
     ship.element = shipElement;
     addButtonClasses(cellElements);
     cellElements.forEach((element) => {
@@ -91,15 +89,20 @@ function handleChooseCell(event) {
 }
 
 function handlePlaceShip() {
-  fetch(`/placements}`, {
+  fetch(`placements`, {
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
     method: 'POST',
     body: JSON.stringify({
-      length: ship.length,
+      shipLength: ship.shipLength,
       firstCell: ship.firstCell,
       secondCell: ship.secondCell,
     }),
   })
     .then(() => {
+      // console.log(res);
       window.location.reload();
     })
     .catch((e) => console.log('Error', e));

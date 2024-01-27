@@ -22,6 +22,7 @@ import { GameService } from 'src/game/game.service';
 import { PlacementService } from './placement.service';
 import { PlacementDto } from 'src/placement/dto/placement.dto';
 import { placementStage } from 'src/constants';
+import { getShipCells } from './placement.utils';
 
 @UseGuards(AccessJwtGuard)
 @Controller('placements')
@@ -75,39 +76,35 @@ export class MapController {
     @Body() dto: PlacementDto,
   ): Promise<void> {
     // const dto = req.body;
-    console.log('dto', dto);
+    // console.log('req dto', req);
+    console.log('POST dto', dto);
     const user = req.user as UserValidatedDto;
     // console.log('body', req.body);
 
     // console.log('ruleItem. cells', rule, cells, typeof cells);
     // const player = await this.userService.findById(user.id);
     const game = await this.gameService.findByUserId(user.id);
-    const placement = await this.placementService.placeShip(
-      game.id,
-      user.id,
-      dto,
-    );
-    // console.log('newGame', newGame);
+    const shipCells = getShipCells(dto.firstCell, dto.secondCell);
+    const placement = await this.placementService.placeShip(game.id, user.id, {
+      shipLength: dto.shipLength,
+      shipCells,
+    });
+    console.log('placement', placement);
     if (placement) {
-      res.redirect(`/placement`);
+      res.status(200).json({ success: true });
     } else {
-      res.redirect(`/#game-rules`);
+      res.status(200).json({ success: false });
     }
-    // console.log('game', game);
-    // if (game.status === 'placement') {
-    //   res.redirect(`game/${game.id}/map`);
-    // }
-    // res.redirect(`/map`);
   }
 
-  @Delete()
-  async deletePlacement(@Req() req: Request, @Res() res: Response) {
-    const user = req.user as UserValidatedDto;
-    const game = await this.gameService.findByUserId(user.id);
-    if (!game || !(game.stage === placementStage)) {
-      throw new NotFoundException();
-    }
-    await this.placementService.deletePlacement(game.id, user.id);
-    return res.status(200).json({ success: true });
-  }
+  // @Delete()
+  // async deletePlacement(@Req() req: Request, @Res() res: Response) {
+  //   const user = req.user as UserValidatedDto;
+  //   const game = await this.gameService.findByUserId(user.id);
+  //   if (!game || !(game.stage === placementStage)) {
+  //     throw new NotFoundException();
+  //   }
+  //   await this.placementService.deletePlacement(game.id, user.id);
+  //   return res.status(200).json({ success: true });
+  // }
 }

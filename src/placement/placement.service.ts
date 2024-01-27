@@ -1,19 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { DockService } from 'src/dock/dock.service';
-import { PlacementDto } from './dto/placement.dto';
-// import { GameService } from 'src/game/game.service';
-import {
-  columnsLegend,
-  rowsLegend,
-  takenCellType,
-  spaceAroundCellType,
-} from 'src/constants';
-
-type appliedCell = {
-  cell: number;
-  length: number;
-};
+import { PlaceShipDto, PlacementDto } from './dto/placement.dto';
+import { takenCellType, spaceAroundCellType } from 'src/constants';
+import * as utils from './placement.utils';
 
 @Injectable()
 export class PlacementService {
@@ -22,83 +12,10 @@ export class PlacementService {
     private readonly dockService: DockService,
   ) { }
 
-  private async getCellText(
-    rowIdx: number,
-    columnIdx: number,
-    takenCells: appliedCell[],
-  ) {
-    const values = takenCells.filter(
-      (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
-    );
-    if (values.length > 0) {
-      return values.at(0).length.toString();
-    } else {
-      return '';
-    }
-  }
-
-  private getCellProps(
-    rowIdx: number,
-    columnIdx: number,
-    takenCells: appliedCell[],
-    spaceAroundCells: appliedCell[],
-    isFullPlacement: boolean,
-  ): {
-    isButton: boolean;
-    isDisabledCell: boolean;
-    isShip: boolean;
-  } {
-    const takenCellsValues = takenCells.filter(
-      (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
-    );
-    if (takenCellsValues.length > 0) {
-      return {
-        isButton: false,
-        isDisabledCell: false,
-        isShip: true,
-      };
-    } else {
-      const spaceAroundCellsValues = spaceAroundCells.filter(
-        (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
-      );
-      if (spaceAroundCellsValues.length > 0) {
-        // console.log('values', spaceAroundCellsValues);
-        return {
-          isButton: false,
-          isDisabledCell: true,
-          isShip: false,
-        };
-      }
-    }
-    return {
-      isButton: !isFullPlacement,
-      isDisabledCell: isFullPlacement,
-      isShip: false,
-    };
-  }
-
-  private getCellIdx(rowIdx: number, columnIdx: number) {
-    return rowIdx * 10 + columnIdx;
-  }
-
-  // private getRenderMapCellIdx(rowIdx: number, columnIdx: number) {
-  //   const cell = this.getCellIdx(rowIdx, columnIdx);
-  //   return {
-  //     id: cell.toString(),
-  //     cell,
-  //   };
-  // }
-
   async getAppliedCells(gameId: number, userId: number) {
     const placement = await this.prisma.placement.findMany({
       where: { gameId, userId },
       include: {
-        ship: {
-          select: {
-            name: true,
-            length: true,
-          },
-        },
         cells: true,
       },
     });
@@ -108,7 +25,7 @@ export class PlacementService {
       item.cells
         .filter((cell) => cell.cellType == takenCellType)
         .forEach((cell) => {
-          takenCells.push({ cell: cell.cell, length: item.ship.length });
+          takenCells.push({ cell: cell.cell, length: item.shipLength });
         });
     });
     let spaceAroundCells = [];
@@ -136,9 +53,9 @@ export class PlacementService {
     for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
-        const cell = this.getCellIdx(rowIdx, columnIdx);
-        const text = await this.getCellText(rowIdx, columnIdx, takenCells);
-        const cellProps = this.getCellProps(
+        const cell = utils.getCellIdx(rowIdx, columnIdx);
+        const text = utils.getCellText(rowIdx, columnIdx, takenCells);
+        const cellProps = utils.getCellProps(
           rowIdx,
           columnIdx,
           takenCells,
@@ -152,7 +69,7 @@ export class PlacementService {
           color: 'primary',
         });
       }
-      result.push({ row });
+      result.push({ row, rowNumber: rowIdx + 1 });
     }
     // console.log(result.at(1).row);
     return result;
@@ -164,9 +81,9 @@ export class PlacementService {
     for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
-        const cell = this.getCellIdx(rowIdx, columnIdx);
-        const text = await this.getCellText(rowIdx, columnIdx, []);
-        const cellProps = this.getCellProps(
+        const cell = utils.getCellIdx(rowIdx, columnIdx);
+        const text = utils.getCellText(rowIdx, columnIdx, []);
+        const cellProps = utils.getCellProps(
           rowIdx,
           columnIdx,
           [],
@@ -186,104 +103,10 @@ export class PlacementService {
     return result;
   }
 
-  private isHorizontalPosition(cells: number[]): boolean {
-    if (cells.length <= 1) {
-      return true;
-    }
-    if (cells.at(1) - cells.at(0) === 1) {
-      return true;
-    }
-    return false;
-  }
-
-  private isInRange(cells: number[]) {
-    if (cells.at(0) < 0 || cells.at(-1) > 99) {
-      return false;
-    }
-    return true;
-  }
-
-  private isOnOneRow(cells: number[]) {
-    return Math.floor(cells.at(0) / 10) === Math.floor(cells.at(-1) / 10);
-  }
-
-  private isOnOneColumn(cells: number[]) {
-    return cells.at(0) % 10 === cells.at(-1) % 10;
-  }
-
-  private isValidForm(length: number, cells: number[]) {
-    if (length !== cells.length) {
-      return false;
-    }
-    if (length === 1) {
-      return true;
-    }
-    const diff = cells.at(-1) - cells.at(0);
-    if (this.isHorizontalPosition(cells)) {
-      return diff === length - 1 && this.isOnOneRow(cells);
-    } else {
-      return diff === (length - 1) * 10;
-    }
-  }
-
-  private getSpaceAroundCells(cell: number) {
-    const isLeftBorder = cell % 10 === 0;
-    if (isLeftBorder) {
-      return [cell - 10, cell - 9, cell + 1, cell + 10, cell + 11];
-    }
-    const isRightBorder = (cell + 1) % 10 === 0;
-    if (isRightBorder) {
-      return [cell - 1, cell - 10, cell - 11, cell + 9, cell + 10];
-    }
-    return [
-      cell - 1,
-      cell - 10,
-      cell - 11,
-      cell - 9,
-      cell + 1,
-      cell + 9,
-      cell + 10,
-      cell + 11,
-    ];
-  }
-
-  private isFreeAround(takenCells: number[], cells: number[]) {
-    let intersection = cells.filter((item) => takenCells.includes(item));
-    if (intersection.length > 0) {
-      return { isFreeAround: false, cellsAround: null };
-    }
-    let shipSpaceAroundCells = [];
-    cells.forEach((item) => {
-      shipSpaceAroundCells.push(...this.getSpaceAroundCells(item));
-    });
-    shipSpaceAroundCells = [...new Set(shipSpaceAroundCells)]
-      .sort(this.compareNumbers)
-      .filter((item) => item >= 0 && item < 100);
-
-    intersection = shipSpaceAroundCells.filter((item) =>
-      takenCells.includes(item),
-    );
-    if (intersection.length > 0) {
-      return { isFreeAround: false, spaceAroundCells: null };
-    }
-
-    shipSpaceAroundCells = shipSpaceAroundCells
-      .filter((item) => !cells.includes(item))
-      .map((item) => {
-        return { cell: item, cellType: spaceAroundCellType };
-      });
-
-    return { isFreeAround: true, shipSpaceAroundCells };
-  }
-
-  private compareNumbers(a: number, b: number) {
-    return a - b;
-  }
-
-  async getInstalledShips(gameId: number, userId: number) {
+  private async getInstalledShips(gameId: number, userId: number) {
     const placement = await this.prisma.placement.groupBy({
       where: { gameId, userId },
-      by: ['shipId'],
+      by: ['shipLength'],
       _count: {
         _all: true,
       },
@@ -291,7 +114,7 @@ export class PlacementService {
     // console.log('getShips', placement);
     return placement.map((item) => {
       return {
-        shipId: item.shipId,
+        shipLength: item.shipLength,
         quantity: item._count._all,
       };
     });
@@ -304,7 +127,7 @@ export class PlacementService {
     let counter = 0;
     docks.forEach((item) => {
       const isInstalled = installedShips.filter(
-        (installed) => installed.shipId === item.shipId,
+        (installed) => installed.shipLength === item.shipLength,
       );
       // console.log('isInstalled', item.sheepId, isInstalled, isInstalled.length);
       const quantity =
@@ -316,7 +139,7 @@ export class PlacementService {
         for (let i = 0; i < quantity; i++) {
           row.push({
             counter: counter++,
-            length: item.ship.length,
+            length: item.shipLength,
           });
         }
         availableShips.push({ row });
@@ -325,27 +148,9 @@ export class PlacementService {
     return availableShips;
   }
 
-  private getShipCells(firstCell: number, secondCell: number) {
-    if (firstCell === secondCell) {
-      return [firstCell];
-    }
-    const shipCells = [firstCell, secondCell].sort(this.compareNumbers);
-    if (this.isOnOneRow(shipCells)) {
-      for (let i = shipCells.at(0); i < shipCells.at(1); i++) {
-        shipCells.push(i);
-      }
-    } else if (this.isOnOneColumn(shipCells)) {
-      for (let i = shipCells.at(0) + 10; i < shipCells.at(1); i = i + 10) {
-        shipCells.push(i);
-      }
-    }
-    return shipCells;
-  }
-
-  async placeShip(gameId: number, userId: number, dto: PlacementDto) {
-    const { length, firstCell, secondCell } = dto;
-    const cells = this.getShipCells(firstCell, secondCell);
-    const shipCells = [...new Set(cells)].sort(this.compareNumbers);
+  async placeShip(gameId: number, userId: number, dto: PlaceShipDto) {
+    const { shipLength, shipCells: shipCellsRaw } = dto;
+    const shipCells = [...new Set(shipCellsRaw)].sort(utils.compareNumbers);
     // console.log('cellsSorted', cellsSorted, typeof cellsSorted.at(0));
     // console.log('dto', dto);
 
@@ -353,13 +158,13 @@ export class PlacementService {
     // console.log(this.isValidForm(rule.Sheep.length, cellsSorted));
     // console.log(this.isFreeAround(game.mapUserStart, cellsSorted));
     if (
-      this.isInRange(shipCells) &&
-      this.isValidForm(length, shipCells)
+      utils.isInRange(shipCells) &&
+      utils.isValidForm(shipLength, shipCells)
       // &&
       // this.isFreeAround(game.mapUserStart, cellsSorted)
     ) {
       const { takenCells } = await this.getAppliedCells(gameId, userId);
-      const { isFreeAround, shipSpaceAroundCells } = this.isFreeAround(
+      const { isFreeAround, shipSpaceAroundCells } = utils.isFreeAround(
         takenCells,
         shipCells,
       );
@@ -373,7 +178,7 @@ export class PlacementService {
       const placement = await this.prisma.placement.create({
         data: {
           gameId,
-          shipId,
+          shipLength,
           userId,
           cells: {
             create: [...shipTakenCells, ...shipSpaceAroundCells],
@@ -388,10 +193,10 @@ export class PlacementService {
     return null;
   }
 
-  async deletePlacement(gameId: number, userId: number) {
-    // console.log('deletePlacement');
-    await this.prisma.placement.deleteMany({ where: { gameId, userId } });
-  }
+  // async deletePlacement(gameId: number, userId: number) {
+  //   // console.log('deletePlacement');
+  //   await this.prisma.placement.deleteMany({ where: { gameId, userId } });
+  // }
 
   private plus(a: number, b: number) {
     return a + b;
@@ -445,15 +250,12 @@ export class PlacementService {
     return arrayShipGeneratedCells.at(arrayShipGeneratedCellsIdx);
   }
 
-  async placeShipByBot(placementShip: {
+  private async placeShipByBot(placementShip: {
     gameId: number;
     userId: number;
-    shipId: number;
-    length: number;
+    shipLength: number;
   }) {
-    const { gameId, userId, shipId, length } = placementShip;
-    // console.log('1');
-    // console.log('1=', gameId, userId, shipId, length);
+    const { gameId, userId, shipLength } = placementShip;
 
     const { takenCells, spaceAroundCells } = await this.getAppliedCells(
       gameId,
@@ -468,13 +270,13 @@ export class PlacementService {
       (cell) => !appliedCells.includes(cell),
     );
     // console.log('3=', freeCells);
-    let cells: number[] = [];
+    let shipCells: number[] = [];
     do {
-      cells = this.getShipGeneratedCells(freeCells, length);
+      shipCells = this.getShipGeneratedCells(freeCells, shipLength);
       // console.log('4=', cells);
-    } while (cells.length < 1);
+    } while (shipCells.length < 1);
     // console.log('5=', cells);
-    await this.placeShip(gameId, userId, { shipId, cells });
+    await this.placeShip(gameId, userId, { shipLength, shipCells });
     return;
   }
 
@@ -489,8 +291,7 @@ export class PlacementService {
     type placement = {
       gameId: number;
       userId: number;
-      shipId: number;
-      length: number;
+      shipLength: number;
     };
     const chainShips: placement[] = [];
     docks.forEach((item) => {
@@ -498,8 +299,7 @@ export class PlacementService {
         chainShips.push({
           gameId,
           userId,
-          shipId: item.shipId,
-          length: item.ship.length,
+          shipLength: item.shipLength,
         });
       }
     });

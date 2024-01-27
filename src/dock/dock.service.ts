@@ -2,42 +2,38 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 // import { RuleDto } from './dto/rule.dto';
 
-const includeSelect = {
-  ship: {
-    select: {
-      name: true,
-      length: true,
-    },
-  },
-};
+// const includeSelect = {
+//   ship: {
+//     select: {
+//       name: true,
+//       length: true,
+//     },
+//   },
+// };
 
 @Injectable()
 export class DockService {
   constructor(private readonly prisma: PrismaService) { }
 
   async findMany() {
-    return this.prisma.dock.findMany({
-      include: includeSelect,
-    });
+    return this.prisma.dock.findMany({});
   }
 
-  async findById(id: number) {
-    return await this.prisma.dock.findFirst({
-      where: {
-        id,
-      },
-      include: includeSelect,
-    });
-  }
+  // async findById(id: number) {
+  //   return await this.prisma.dock.findFirst({
+  //     where: {
+  //       id,
+  //     },
+  //   });
+  // }
 
-  async findByShipId(shipId: number) {
-    return await this.prisma.dock.findFirst({
-      where: {
-        shipId,
-      },
-      include: includeSelect,
-    });
-  }
+  // async findByShipLength(shipLength: number) {
+  //   return await this.prisma.dock.findFirst({
+  //     where: {
+  //       shipLength,
+  //     },
+  //   });
+  // }
 
   // async getRenderedGameRules(gameRules: RuleDto[]) {
   //   const allRules = await this.findMany();

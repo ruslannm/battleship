@@ -11,6 +11,8 @@ import {
   botUserId,
   closedStage,
   columnsLegend,
+  createGameStage,
+  gamingStage,
   placementStage,
   rowsLegend,
   stages,
@@ -344,5 +346,37 @@ export class GameService {
         isBot: item.user.id === botUserId,
       };
     });
+  }
+
+  getGameStage(stage: string) {
+    return {
+      isCreateGameStage: stage === createGameStage,
+      isPlacementStage: stage === placementStage,
+      isGamingStage: stage === gamingStage,
+    };
+  }
+
+  async checkAndUpdateStage(gameId: number, userId: number, stage: string) {
+    if (stage === placementStage) {
+      if (await this.isFullPlacement(gameId, userId)) {
+        const game = await this.update(gameId, { stage: gamingStage });
+        if (game) {
+          return game.stage;
+        }
+      }
+    }
+    if (stage === gamingStage) {
+      console.log('Проверить проигрыш одного из игроков');
+      return stage;
+    }
+    return stage;
+  }
+
+  async isFullPlacement(gameId: number, userId: number) {
+    const availableShips = await this.placementService.getAvailableShips(
+      gameId,
+      userId,
+    );
+    return availableShips.length === 0;
   }
 }

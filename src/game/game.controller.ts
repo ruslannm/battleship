@@ -20,7 +20,13 @@ import { Response, Request } from 'express';
 import { AccessJwtGuard } from 'src/auth/access-jwt.guard';
 import { UserValidatedDto } from 'src/user/dto/user.dto';
 import { GameService } from './game.service';
-import { botUserId, placementStage, stages } from 'src/constants';
+import {
+  botUserId,
+  createGameStage,
+  gamingStage,
+  placementStage,
+  stages,
+} from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
 import { CreateGameDto, ShotDto } from './dto/game.dto';
 
@@ -38,73 +44,86 @@ export class GameController {
     const user = req.user as UserValidatedDto;
     // const req.cookies['gameId'];
     console.log(user);
-
     const opponentId = botUserId;
     const playername = (await this.userService.findById(user.id)).username;
     const opponentname = (await this.userService.findById(opponentId)).username;
+    const data = { isAuth: true, playername, opponentname };
     const game = await this.gameService.findByUserId(user.id);
     if (!game) {
-      const data = {
-        isAuth: true,
-        playername,
-        opponentname,
-        userPlacement: {
-          map: await this.placementService.getPlacementForRenderNewGame(),
-        },
-        opponentPlacement: {
-          map: await this.placementService.getPlacementForRenderNewGame(),
-        },
-        isCreateGame: true,
-      };
-      res.render('game', data);
-      return;
-    }
-    // if (game.stage === placementStage) {
-    //   res.redirect(`/placement`);
-    // } else {
-    //   const userPlacement = await this.gameService.getUserCurrentPlacement(
-    //     game.id,
-    //     user.id,
-    //     opponentId,
-    //   );
-
-    //   const opponentPlacement =
-    //     await this.gameService.getOpponentCurrentPlacement(
-    //       game.id,
-    //       opponentId,
-    //       user.id,
-    //     );
-
-    //   if (!(userPlacement && opponentPlacement)) {
-    //     res.render('not-found', { isAuth: true });
-    //     return;
-    //   }
-    const availableShips = await this.placementService.getAvailableShips(
-      game.id,
-      user.id,
-    );
-
-    res.render('game', {
-      playername,
-      opponentname,
-      userPlacement: {
-        map: await this.placementService.getPlacementForRender(
+      data['gameId'] = 0;
+      data['stage'] = createGameStage;
+    } else {
+      data['gameId'] = game.id;
+      console.log('Проверить окончание состояния и перевести в следующее');
+      data['stage'] = await this.gameService.checkAndUpdateStage(
+        game.id,
+        user.id,
+        game.stage,
+      );
+      if (data['stage'] === placementStage) {
+        const availableShips = await this.placementService.getAvailableShips(
           game.id,
           user.id,
-        ),
-      },
-      opponentPlacement: {
-        map: await this.placementService.getPlacementForRenderNewGame(),
-      },
-      isAuth: true,
-      shots: (await this.gameService.getShotReverseOrder(game.id)).slice(0, 15),
-      // isPlacementCompleted,
-      // isAllShipHit:
-      //   userPlacement.isAllShipHit || opponentPlacement.isAllShipHit,
-      winner: game.winner?.username,
-      gameId: game.id,
-      availableShips: { docks: availableShips },
-    });
+        );
+        data['availableShips'] = { docks: availableShips };
+      } else (data['stage'] === gamingStage) {
+        data['shots'] = (
+          await this.gameService.getShotReverseOrder(game.id)
+        ).slice(0, 15);
+      }
+    }
+    data['userPlacement'] = {
+      map: await this.placementService.getPlacementForRender(
+        data['gameId'],
+        user.id,
+      ),
+    };
+    data['opponentPlacement'] = {
+      map: await this.placementService.getPlacementForRender(
+        data['gameId'],
+        opponentId,
+      ),
+    };
+
+    res.render('game', data);
+    //   {
+    //     playername,
+    //     opponentname,
+    //     userPlacement: {
+    //       map: await this.placementService.getPlacementForRender(
+    //         game.id,
+    //         user.id,
+    //       ),
+    //     },
+    //     opponentPlacement: {
+    //       map: await this.placementService.getPlacementForRenderNewGame(),
+    //     },
+    //     isAuth: true,
+    //     shots: (await this.gameService.getShotReverseOrder(game.id)).slice(
+    //       0,
+    //       15,
+    //     ),
+    //     // isPlacementCompleted,
+    //     // isAllShipHit:
+    //     //   userPlacement.isAllShipHit || opponentPlacement.isAllShipHit,
+    //     winner: game.winner?.username,
+    //     gameId: game.id,
+    //     availableShips: { docks: availableShips },
+    //     stage: this.gameService.getGameStage(game.stage),
+    //   });
+    // }
+    // const data = {
+    //   isAuth: true,
+    //   playername,
+    //   opponentname,
+    //   userPlacement: {
+    //     map: await this.placementService.getPlacementForRenderNewGame(),
+    //   },
+    //   opponentPlacement: {
+    //     map: await this.placementService.getPlacementForRenderNewGame(),
+    //   },
+    //   stage: this.gameService.getGameStage(stage),
+    // };
   }
 
   @Post('')

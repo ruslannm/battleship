@@ -1,5 +1,5 @@
 <div class='container m-3'>
-  {{#if isCreateGame}}
+  {{#if stage.isCreateGameStage}}
   <div class="row">
     {{> create-game }}
   </div>
@@ -10,9 +10,9 @@
       <h2><i class="bi bi-person"></i> {{playername}} map</h2>
       {{!-- {{> map-grid userPlacement }} --}}
       {{> map userPlacement}}
-      {{#unless isCreateGame}}
+      {{#if stage.isPlacementStage}}
       {{> dock availableShips}}
-      {{/unless}}
+      {{/if}}
     </div>
 
     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
@@ -34,7 +34,7 @@
         </div> --}}
         {{!-- </form> --}}
     </div>
-    {{#unless isCreateGame}}
+    {{#if stage.isGamingStage}}
     <div class='col-10 col-md-6 col-lg-4 col-xl-4 d-flex flex-column'>
       <div class='card'>
         <div class='card-body'>
@@ -54,7 +54,7 @@
         </div>
       </div>
     </div>
-    {{/unless}}
+    {{/if}}
 
   </div>
 </div>
