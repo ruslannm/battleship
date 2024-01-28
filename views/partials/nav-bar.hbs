@@ -3,16 +3,18 @@
     <ul class='navbar-nav'>
       {{#if isAuth}}
 
-        <li class='nav-item'>
-          <a class='nav-link active' aria-current='page' href='/'>Home</a>
-        </li>
+      <li class='nav-item'>
+        <a class='nav-link active' aria-current='page' href='/'>Home</a>
+      </li>
       {{/if}}
       {{#if isAuth}}
-        {{#unless isAdmin}}
-          <li class='nav-item'>
-            <a class='nav-link' href='/game'>Game</a>
-          </li>
-        {{/unless}}
+      <li class='nav-item'>
+        <a class='nav-link' href='/myStats'>My stats</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/bestPlayers'>Best players</a>
+      </li>
+
       {{/if}}
       {{! <li class='nav-item'>
         <a class='nav-link' href='/rules'>Правила</a>
@@ -22,17 +24,17 @@
   <div class='text-end'>
     <ul class='navbar-nav px-3'>
       {{#unless isAuth}}
-        <li class='nav-item'>
-          <a class='nav-link' href='/signup'>Register</a>
-        </li>
-        <li class='nav-item'>
-          <a class='nav-link' href='/signin'>Login</a>
-        </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/signup'>Register</a>
+      </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/signin'>Login</a>
+      </li>
       {{/unless}}
       {{#if isAuth}}
-        <li class='nav-item'>
-          <a class='nav-link' href='/signout'>Logout</a>
-        </li>
+      <li class='nav-item'>
+        <a class='nav-link' href='/signout'>Logout</a>
+      </li>
       {{/if}}
     </ul>
   </div>

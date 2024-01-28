@@ -107,6 +107,36 @@ export class GameService {
     });
   }
 
+  async findManyClosedByUserId(userId: number) {
+    return await this.prisma.game.findMany({
+      where: {
+        users: {
+          some: {
+            userId: userId,
+          },
+        },
+        stage: closedStage,
+      },
+      include: {
+        users: {
+          select: {
+            isFirstShooter: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+        winner: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+  }
+
   async create(playerId: number, opponentId: number, firstShooterId: number) {
     const result = await this.prisma.game.create({
       data: {

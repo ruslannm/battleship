@@ -16,47 +16,12 @@
 
     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
       <h2><i class="bi bi-robot"></i> {{opponentname}} map</h2>
-      {{!-- <form id="map-opponent-placement" class="row requires-validation" action='/game/shot' , method='post'> --}}
-        {{> map opponentMap }}
-        {{!-- <div class="col-4"> --}}
-          {{!-- {{#if isAllShipHit}} --}}
-          {{!-- <h6 class='mt-2'>Игра завершена, победитель: {{winner}}</h6>
-          <button id="close-game" type='button' class='btn btn-outline-success mt-2 ms-2' value="{{gameId}}">Начать
-            новую игру</button> --}}
-          {{!-- {{else}} --}}
-          {{!-- <button id="submit-placement" type='submit' class='btn btn-outline-success mt-2 ms-2'
-            value="{{gameId}}">
-            Применить
-          </button>
-          {{/if}} --}}
-          {{!--
-        </div> --}}
-        {{!-- </form> --}}
+      {{> map opponentMap }}
     </div>
     {{#if isStage.isGamingStage}}
-    <div class='col-10 col-md-6 col-lg-4 col-xl-4 d-flex flex-column'>
-      <div class='card my-3'>
-        <div class='card-body'>
-          <h5 class='card-header'>Выстрелы</h5>
-          <ul class='list-unstyled'>
-            {{#each shots}}
-            <li class="bg-{{this.bgcolor}}"></i> {{this.id}} :
-              {{#if this.isBot}}
-              <i class="bi bi-robot"></i>
-              {{else}}
-              <i class="bi bi-person"></i>
-              {{/if}}
-              {{this.username}} -> {{this.cell}}
-            </li>
-            {{/each}}
-          </ul>
-        </div>
-      </div>
-    </div>
+    {{> shots}}
     {{/if}}
 
   </div>
 </div>
-{{!--
-<script type='text/javascript' src='/js/placement.js'></script> --}}
 <script type='text/javascript' src='/js/game.js'></script>
