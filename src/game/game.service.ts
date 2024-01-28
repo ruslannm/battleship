@@ -19,7 +19,7 @@ import {
 } from 'src/constants';
 import { PlacementService } from 'src/placement/placement.service';
 import { CreateShotDto } from './dto/game.dto';
-
+import * as utils from 'src/placement//placement.utils';
 // const fleetSelect = {
 //   select: {
 //     Sheep: {
@@ -230,6 +230,16 @@ export class GameService {
         },
         playerUserId,
       );
+      if (resultShot) {
+        const isWin = await this.checkAndUpdateWinner(
+          gameId,
+          botUserId,
+          playerUserId,
+        );
+        if (isWin) {
+          resultShot = false;
+        }
+      }
       console.log('BOT cell, resultShot', cell, resultShot);
     } while (resultShot);
     return resultShot;
@@ -267,18 +277,16 @@ export class GameService {
     };
   }
 
+  /** Проверить что установлены все корабли и перейти на игру */
   async checkAndUpdateStage(gameId: number, userId: number, stage: string) {
-    if (stage === placementStage) {
-      if (await this.isFullPlacement(gameId, userId)) {
-        const game = await this.update(gameId, { stage: gamingStage });
-        if (game) {
-          return game.stage;
-        }
+    if (
+      stage === placementStage &&
+      (await this.isFullPlacement(gameId, userId))
+    ) {
+      const game = await this.update(gameId, { stage: gamingStage });
+      if (game) {
+        return game.stage;
       }
-    }
-    if (stage === gamingStage) {
-      console.log('Проверить проигрыш одного из игроков');
-      return stage;
     }
     return stage;
   }
@@ -291,79 +299,160 @@ export class GameService {
     return availableShips.length === 0;
   }
 
-  getButtons(gameId: number, userId: number, stage: string) {
-    if (stage === createGameStage) {
-      return [];
+  //** После каждого выстрела проверить и зафиксировать выигрыш */
+  async checkAndUpdateWinner(
+    gameId: number,
+    userId: number,
+    opponentId: number,
+  ) {
+    const appliedCells = await this.placementService.getAppliedCells(
+      gameId,
+      opponentId,
+    );
+    const takenCells = appliedCells['takenCells'].map((item) => item.cell);
+    const game = await this.findById(gameId);
+    const userShots = game.shots
+      .filter((item) => item.user.id === userId)
+      .map((item) => item.cell);
+    const ships = this.getShips(game.stage, opponentId, takenCells, userShots);
+    if (ships.goodShips.length === 0) {
+      await this.update(gameId, { stage: closedStage });
+      await this.update(gameId, { winnerId: userId });
+      return true;
     }
-    if (stage === placementStage) {
-      if (userId === botUserId) {
-        return [];
-      }
-      // определить поля свободные от кораблей и отчуждений
-      return [];
+    return false;
+  }
+
+  /** Ячейки которые можно нажимать при установке корабля и при выстрелах */
+  getButtons(
+    stage: string,
+    userId: number,
+    takenCells: number[],
+    spaceAroundCells: number[],
+    opponentShots: number[],
+  ) {
+    if (stage === placementStage && userId !== botUserId) {
+      return [...Array(100).keys()]
+        .filter((cell) => !takenCells.includes(cell))
+        .filter((cell) => !spaceAroundCells.includes(cell));
     }
-    if (stage === gamingStage) {
-      if (userId !== botUserId) {
-        return [];
-      }
-      // поля по которым не стрелял
-      return [];
+    if (stage === gamingStage && userId === botUserId) {
+      return [...Array(100).keys()].filter(
+        (cell) => !opponentShots.includes(cell),
+      );
     }
     return [];
   }
 
-  getGoodShip(gameId: number, userId: number, stage: string) {
-    if (stage === createGameStage) {
-      return [];
-    }
-    if (stage === placementStage) {
-      if (userId === botUserId) {
-        return [];
-      }
-      // определить поля
-      return [];
+  /** корабли */
+  getShips(
+    stage: string,
+    userId: number,
+    takenCells: number[],
+    opponentShots: number[],
+  ) {
+    if (stage === placementStage && userId !== botUserId) {
+      return {
+        goodShips: takenCells,
+        badShips: [],
+      };
     }
     if (stage === gamingStage) {
+      const goodShips = takenCells.filter(
+        (cell) => !opponentShots.includes(cell),
+      );
+      const badShips = takenCells.filter((cell) =>
+        opponentShots.includes(cell),
+      );
       if (userId === botUserId) {
-        return []; //всегда пусто
+        return {
+          goodShips: [],
+          badShips,
+        };
       }
-      // неподбитые корабли
-      return [];
+      return {
+        goodShips,
+        badShips,
+      };
+    }
+    return {
+      goodShips: [],
+      badShips: [],
+    };
+  }
+
+  /** промахи */
+  getMissingCells(
+    stage: string,
+    takenCells: number[],
+    opponentShots: number[],
+  ) {
+    if (stage === gamingStage) {
+      return opponentShots.filter((cell) => !takenCells.includes(cell));
     }
     return [];
   }
 
-  getBadShip(gameId: number, userId: number, stage: string) {
-    if (stage === createGameStage) {
-      return [];
-    }
-    if (stage === placementStage) {
-      return []; // всегда пусто
+  async getMap(
+    gameId: number,
+    userId: number,
+    opponentId: number,
+    stage: string,
+  ) {
+    let takenCells = [];
+    let spaceAroundCells = [];
+    let opponentShots = [];
+    if (stage !== createGameStage) {
+      const appliedCells = await this.placementService.getAppliedCells(
+        gameId,
+        userId,
+      );
+      takenCells = appliedCells['takenCells'].map((item) => item.cell);
+      spaceAroundCells = appliedCells['spaceAroundCells'].map(
+        (item) => item.cell,
+      );
     }
     if (stage === gamingStage) {
-      if (userId === botUserId) {
-        return []; //рассчитать
-      }
-      // подбитые корабли
-      return [];
+      const game = await this.find({ id: gameId, userId });
+      opponentShots = game.shots
+        .filter((item) => item.user.id === opponentId)
+        .map((item) => item.cell);
     }
-    return [];
-  }
+    const result = [];
+    const buttons = this.getButtons(
+      stage,
+      userId,
+      takenCells,
+      spaceAroundCells,
+      opponentShots,
+    );
+    const ships = this.getShips(stage, userId, takenCells, opponentShots);
+    const missingCells = this.getMissingCells(stage, takenCells, opponentShots);
+    console.log(gameId, userId, opponentId, stage);
+    // console.log('takenCells', takenCells);
+    // console.log('spaceAroundCells', spaceAroundCells);
+    console.log(buttons, ships, missingCells);
 
-  getMissingCell(gameId: number, userId: number, stage: string) {
-    if (stage === createGameStage) {
-      return [];
-    }
-    if (stage === placementStage) {
-      return []; // всегда пусто
-    }
-    if (stage === gamingStage) {
-      if (userId === botUserId) {
-        return []; //рассчитать
+    for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
+      const row = [];
+      for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
+        const cell = utils.getCellIdx(rowIdx, columnIdx);
+        const cellProps = {
+          isButton: buttons.includes(cell),
+          isGoodShip: ships['goodShips'].includes(cell),
+          isBadShip: ships['badShips'].includes(cell),
+          isMissingCell: missingCells.includes(cell),
+        };
+        row.push({
+          cell,
+          ...cellProps,
+        });
       }
-      // рассчитать
-      return [];
+      result.push({ row, rowNumber: rowIdx + 1 });
     }
-    return [];
+    // console.log(result.at(1).row);
+    return result;
+
+    // console.log('takenCells, spaceAroundCells', takenCells, spaceAroundCells);
   }
 }

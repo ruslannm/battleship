@@ -72,21 +72,26 @@ export class GameController {
         ).slice(0, 15);
       }
     }
-    data['userPlacement'] = {
-      map: await this.placementService.getPlacementForRender(
+    data['userMap'] = {
+      map: await this.gameService.getMap(
         data['gameId'],
         user.id,
-        data['stage'],
-      ),
-    };
-    data['opponentPlacement'] = {
-      map: await this.placementService.getPlacementForRender(
-        data['gameId'],
         opponentId,
         data['stage'],
       ),
+      userType: 'user',
+    };
+    data['opponentMap'] = {
+      map: await this.gameService.getMap(
+        data['gameId'],
+        opponentId,
+        user.id,
+        data['stage'],
+      ),
+      userType: 'bot',
     };
     data['isStage'] = this.gameService.getGameStage(data['stage']);
+    // console.log('data', data);
     res.render('game', data);
   }
 
@@ -128,7 +133,7 @@ export class GameController {
     res.redirect(`/`);
   }
 
-  @Post('/shot')
+  @Post('/shots')
   async shot(
     @Body() dto: ShotDto,
     @Req() req: Request,
@@ -147,32 +152,17 @@ export class GameController {
       { userId: user.id, gameId: game.id, cell: dto.cell },
       opponentId,
     );
-    console.log('isHit', isHit);
-    if (!isHit) {
+    const isWin = await this.gameService.checkAndUpdateWinner(
+      game.id,
+      user.id,
+      opponentId
+    )
+    console.log('isHit', isHit, 'isWin', isWin);
+    if (!(isHit || isWin)) {
       await this.gameService.makeBotShot(game.id, opponentId, user.id);
     }
-    res.redirect(`/game/${game.id}`);
-    // const { first_shooter } = dto;
-    // const game = await this.gameService.findByUserId(user.id);
-    // if (game) {
-    //   res.render('not-found', { isAuth: true });
-    //   return;
-    // }
-    // const opponentId = botUserId;
-    // const newGame = await this.gameService.create(
-    //   user.id,
-    //   opponentId,
-    //   first_shooter === 'player' ? user.id : opponentId,
-    // );
-    // // Бот размещает корабли и делает отметку что готов к игре
-    // await this.placementService.placeShipsByBot(newGame.id, opponentId);
-    // await this.gameService.updateUsersInGames(
-    //   newGame.id,
-    //   opponentId,
-    //   first_shooter !== 'player',
-    //   { isPlacementCompleted: true },
-    // );
-    // res.redirect(`/placement`);
+    res.redirect(``);
+
   }
 
   @Delete('/:id')

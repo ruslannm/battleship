@@ -37,3 +37,7 @@ td.cell > div {
   height: 29.1px;
   padding: 0;
 }
+
+td.missing-cell {
+  text-align: center;
+}

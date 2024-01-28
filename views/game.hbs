@@ -8,8 +8,7 @@
   <div class="row">
     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
       <h2><i class="bi bi-person"></i> {{playername}} map</h2>
-      {{!-- {{> map-grid userPlacement }} --}}
-      {{> map userPlacement}}
+      {{> map userMap}}
       {{#if isStage.isPlacementStage}}
       {{> dock availableShips}}
       {{/if}}
@@ -18,7 +17,7 @@
     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
       <h2><i class="bi bi-robot"></i> {{opponentname}} map</h2>
       {{!-- <form id="map-opponent-placement" class="row requires-validation" action='/game/shot' , method='post'> --}}
-        {{> map opponentPlacement }}
+        {{> map opponentMap }}
         {{!-- <div class="col-4"> --}}
           {{!-- {{#if isAllShipHit}} --}}
           {{!-- <h6 class='mt-2'>Игра завершена, победитель: {{winner}}</h6>
@@ -58,5 +57,6 @@
 
   </div>
 </div>
-<script type='text/javascript' src='/js/placement.js'></script>
+{{!--
+<script type='text/javascript' src='/js/placement.js'></script> --}}
 <script type='text/javascript' src='/js/game.js'></script>

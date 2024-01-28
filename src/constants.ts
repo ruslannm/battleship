@@ -1,5 +1,5 @@
 export const botUserId = 0;
-export const defaultMap = '0'.repeat(100);
+// export const defaultMap = '0'.repeat(100);
 export const createGameStage = 'create game';
 export const placementStage = 'placement';
 export const gamingStage = 'gaming';
@@ -10,7 +10,7 @@ export const stages = [
   gamingStage,
   closedStage,
 ];
-export const columnsLegend = 'ABCDEFGHKL';
+export const columnsLegend = 'АБВГДЕЖЗИК';
 export const rowsLegend = [...Array(10).keys()].map((i) => i + 1);
 
 export const takenCellType = 'taken';

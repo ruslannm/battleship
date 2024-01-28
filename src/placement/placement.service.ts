@@ -44,42 +44,42 @@ export class PlacementService {
     return { takenCells, spaceAroundCells };
   }
 
-  async getPlacementForRender(gameId: number, userId: number, stage: string) {
-    const result = [];
-    let takenCells = [];
-    let spaceAroundCells = [];
-    if (stage !== createGameStage) {
-      const appliedCells = await this.getAppliedCells(gameId, userId);
-      takenCells = appliedCells['takenCells'];
-      spaceAroundCells = appliedCells['spaceAroundCells'];
-    }
-    // console.log('takenCells, spaceAroundCells', takenCells, spaceAroundCells);
+  // async getPlacementForRender(gameId: number, userId: number, stage: string) {
+  //   const result = [];
+  //   let takenCells = [];
+  //   let spaceAroundCells = [];
+  //   if (stage !== createGameStage) {
+  //     const appliedCells = await this.getAppliedCells(gameId, userId);
+  //     takenCells = appliedCells['takenCells'];
+  //     spaceAroundCells = appliedCells['spaceAroundCells'];
+  //   }
+  //   // console.log('takenCells, spaceAroundCells', takenCells, spaceAroundCells);
 
-    for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
-      const row = [];
-      for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
-        const cell = utils.getCellIdx(rowIdx, columnIdx);
-        const text = utils.getCellText(rowIdx, columnIdx, takenCells);
-        const cellProps = utils.getCellProps(
-          rowIdx,
-          columnIdx,
-          takenCells,
-          spaceAroundCells,
-          stage,
-          userId,
-        );
-        row.push({
-          text,
-          ...cellProps,
-          cell,
-          color: 'primary',
-        });
-      }
-      result.push({ row, rowNumber: rowIdx + 1 });
-    }
-    // console.log(result.at(1).row);
-    return result;
-  }
+  //   for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
+  //     const row = [];
+  //     for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
+  //       const cell = utils.getCellIdx(rowIdx, columnIdx);
+  //       const text = utils.getCellText(rowIdx, columnIdx, takenCells);
+  //       const cellProps = utils.getCellProps(
+  //         rowIdx,
+  //         columnIdx,
+  //         takenCells,
+  //         spaceAroundCells,
+  //         stage,
+  //         userId,
+  //       );
+  //       row.push({
+  //         text,
+  //         ...cellProps,
+  //         cell,
+  //         color: 'primary',
+  //       });
+  //     }
+  //     result.push({ row, rowNumber: rowIdx + 1 });
+  //   }
+  //   // console.log(result.at(1).row);
+  //   return result;
+  // }
 
   private async getInstalledShips(gameId: number, userId: number) {
     const placement = await this.prisma.placement.groupBy({

@@ -99,48 +99,48 @@ export function isFreeAround(takenCells: number[], cells: number[]) {
   return { isFreeAround: true, shipSpaceAroundCells };
 }
 
-export function getCellProps(
-  rowIdx: number,
-  columnIdx: number,
-  takenCells: appliedCell[],
-  spaceAroundCells: appliedCell[],
-  stage: string,
-  userId: number,
-): {
-  isButton: boolean;
-  isShip: boolean;
-} {
-  if (stage === placementStage && userId === botUserId) {
-    return {
-      isButton: false,
-      isShip: false,
-    };
-  }
-  const takenCellsValues = takenCells.filter(
-    (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
-  );
-  if (takenCellsValues.length > 0) {
-    return {
-      isButton: false,
-      isShip: true,
-    };
-  } else {
-    const spaceAroundCellsValues = spaceAroundCells.filter(
-      (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
-    );
-    if (spaceAroundCellsValues.length > 0) {
-      // console.log('values', spaceAroundCellsValues);
-      return {
-        isButton: false,
-        isShip: false,
-      };
-    }
-  }
-  return {
-    isButton: true,
-    isShip: false,
-  };
-}
+// export function getCellProps(
+//   rowIdx: number,
+//   columnIdx: number,
+//   takenCells: appliedCell[],
+//   spaceAroundCells: appliedCell[],
+//   stage: string,
+//   userId: number,
+// ): {
+//   isButton: boolean;
+//   isShip: boolean;
+// } {
+//   if (stage === placementStage && userId === botUserId) {
+//     return {
+//       isButton: false,
+//       isShip: false,
+//     };
+//   }
+//   const takenCellsValues = takenCells.filter(
+//     (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
+//   );
+//   if (takenCellsValues.length > 0) {
+//     return {
+//       isButton: false,
+//       isShip: true,
+//     };
+//   } else {
+//     const spaceAroundCellsValues = spaceAroundCells.filter(
+//       (item) => item.cell === this.getCellIdx(rowIdx, columnIdx),
+//     );
+//     if (spaceAroundCellsValues.length > 0) {
+//       // console.log('values', spaceAroundCellsValues);
+//       return {
+//         isButton: false,
+//         isShip: false,
+//       };
+//     }
+//   }
+//   return {
+//     isButton: true,
+//     isShip: false,
+//   };
+// }
 
 export function getCellIdx(rowIdx: number, columnIdx: number) {
   return rowIdx * 10 + columnIdx;

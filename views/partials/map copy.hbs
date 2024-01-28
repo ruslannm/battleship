@@ -16,23 +16,24 @@
   <tr>
     <td class='axis'>{{this.rowNumber}}</td>
     {{#each this.row}}
-    {{#if this.isButton}}
     <td class='cell border border-primary'>
+      {{#if this.isButton}}
       <div id="{{../../userType}}-cell-{{this.cell}}" class='{{../../userType}}-btn-cell' value="{{this.cell}}">
       </div>
+      {{/if}}
+      {{#if this.isGoodShip}}
+      <div class="shipCell bg-primary">
+      </div>
+      {{/if}}
+      {{#if this.isBadShip}}
+      <div class="shipCell bg-danger">
+      </div>
+      {{/if}}
+      {{#if this.isMissingCell}}
+      <div class='missing-cell'>-</div>
+      {{/if}}
+
     </td>
-    {{else if this.isGoodShip}}
-    <td class="cell border border-primary shipCell bg-primary">
-    </td>
-    {{else if this.isBadShip}}
-    <td class="cell border border-primary shipCell bg-danger">
-    </td>
-    {{else if this.isMissingCell}}
-    <td class='cell border border-primary missing-cell'>-</td>
-    {{else}}
-    <td class='cell border border-primary'>
-    </td>
-    {{/if}}
     {{/each}}
   </tr>
   {{/each}}
