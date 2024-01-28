@@ -20,17 +20,7 @@ import {
 import { PlacementService } from 'src/placement/placement.service';
 import { CreateShotDto } from './dto/game.dto';
 import * as utils from 'src/placement//placement.utils';
-// const fleetSelect = {
-//   select: {
-//     Sheep: {
-//       select: {
-//         name: true,
-//         length: true,
-//       },
-//     },
-//     quantity: true,
-//   },
-// };
+import { UserService } from 'src/user/user.service';
 
 const includeSelect = {
   shots: {
@@ -54,7 +44,7 @@ const whereFilter = {
 export class GameService {
   constructor(
     private readonly prisma: PrismaService,
-    // private readonly ruleService: RuleService,
+    private readonly userService: UserService,
     private readonly placementService: PlacementService,
   ) { }
 
@@ -137,6 +127,52 @@ export class GameService {
     });
   }
 
+  async findBestPlayers() {
+    const participatedInGames = await this.prisma.usersInGames.groupBy({
+      where: {
+        game: {
+          stage: closedStage,
+        },
+      },
+      by: ['userId'],
+      _count: {
+        gameId: true,
+      },
+      having: {
+        gameId: {
+          _count: { gte: 10 },
+        },
+      },
+    });
+    const winInGames = await this.prisma.game.groupBy({
+      where: {
+        stage: closedStage,
+      },
+      by: ['winnerId'],
+      _count: {
+        id: true,
+      },
+    });
+    const users = (await this.userService.findMany()).map((item) => {
+      return {
+        id: item.id,
+        username: item.username,
+      };
+    });
+    const bestPlayers = participatedInGames.map((item) => {
+      const userId = item.userId;
+      const username = users.filter((el) => el.id === userId).at(0).username;
+      const amountWin = winInGames
+        .filter((el) => {
+          return el.winnerId === userId;
+        })
+        .at(0)._count.id;
+      return { username, amountWin };
+    });
+    bestPlayers.sort((a, b) => b.amountWin - a.amountWin);
+    return bestPlayers;
+  }
+
   async create(playerId: number, opponentId: number, firstShooterId: number) {
     const result = await this.prisma.game.create({
       data: {
@@ -198,25 +234,6 @@ export class GameService {
       throw new BadRequestException('Foreign key constraint failed');
     }
   }
-
-  // async resetMap(id: number) {
-  //   const deleteData = {
-  //     mapUserStart: defaultMap,
-  //     fleetUser: {
-  //       set: [],
-  //     },
-  //     logs: {
-  //       deleteMany: {},
-  //     },
-  //   };
-  //   await this.update(id, deleteData);
-  //   const logData = {
-  //     logs: {
-  //       create: { description: 'startLogMessage' },
-  //     },
-  //   };
-  //   return await this.update(id, logData);
-  // }
 
   async makeShot(data: CreateShotDto, opponentUserId: number) {
     await this.prisma.shot.create({
@@ -308,13 +325,24 @@ export class GameService {
   }
 
   /** Проверить что установлены все корабли и перейти на игру */
-  async checkAndUpdateStage(gameId: number, userId: number, stage: string) {
+  async checkAndUpdateStage(
+    gameId: number,
+    userId: number,
+    stage: string,
+    opponentId: number,
+  ) {
     if (
       stage === placementStage &&
       (await this.isFullPlacement(gameId, userId))
     ) {
       const game = await this.update(gameId, { stage: gamingStage });
       if (game) {
+        const firstShooterId = game.users
+          .filter((item) => item.isFirstShooter)
+          .at(0).userId;
+        if (firstShooterId === opponentId) {
+          await this.makeBotShot(gameId, opponentId, userId);
+        }
         return game.stage;
       }
     }
@@ -344,8 +372,12 @@ export class GameService {
     const userShots = game.shots
       .filter((item) => item.user.id === userId)
       .map((item) => item.cell);
-    const ships = this.getShips(game.stage, opponentId, takenCells, userShots);
-    if (ships.goodShips.length === 0) {
+
+    const opponentGoodShips = takenCells.filter(
+      (cell) => !userShots.includes(cell),
+    );
+
+    if (opponentGoodShips.length === 0) {
       await this.update(gameId, { stage: closedStage });
       await this.update(gameId, { winnerId: userId });
       return true;

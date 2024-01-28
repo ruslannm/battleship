@@ -44,6 +44,14 @@ export class AppController {
     return { isAuth: true, games: renderGames };
   }
 
+  @UseGuards(AccessJwtGuard)
+  @Get('bestPlayers')
+  @Render('bestPlayers')
+  async bestPlayers() {
+    const bestPlayers = await this.gameService.findBestPlayers();
+    return { isAuth: true, bestPlayers };
+  }
+
   @Get('not-found')
   @Render('not-found')
   async notFound(@Req() req: Request) {

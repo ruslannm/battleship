@@ -6,17 +6,15 @@
           <table class="table table-striped table-bordered border-primary">
             <thead>
               <tr>
-                <th class='my-stats'>id</th>
-                <th class='my-stats'>Первый выстрел</th>
-                <th class='my-stats'>Победитель</th>
+                <th>Игрок</th>
+                <th>Рейтинг (Количество побед)</th>
               </tr>
             </thead>
             <tbody>
-              {{#each games}}
+              {{#each bestPlayers}}
               <tr>
-                <td class='my-stats'>{{this.gameId}}</td>
-                <td class='my-stats'>{{this.firstShooter}}</td>
-                <td class='my-stats'>{{this.winner}}</td>
+                <td>{{this.username}}</td>
+                <td>{{this.amountWin}}</td>
               </tr>
               {{/each}}
             </tbody>

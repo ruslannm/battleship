@@ -59,6 +59,7 @@ export class GameController {
         game.id,
         user.id,
         game.stage,
+        opponentId,
       );
       if (data['stage'] === placementStage) {
         const availableShips = await this.placementService.getAvailableShips(
@@ -155,14 +156,13 @@ export class GameController {
     const isWin = await this.gameService.checkAndUpdateWinner(
       game.id,
       user.id,
-      opponentId
-    )
+      opponentId,
+    );
     console.log('isHit', isHit, 'isWin', isWin);
     if (!(isHit || isWin)) {
       await this.gameService.makeBotShot(game.id, opponentId, user.id);
     }
     res.redirect(``);
-
   }
 
   @Delete('/:id')
