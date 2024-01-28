@@ -1,4 +1,5 @@
 export const botUserId = 0;
+export const userRole = 'player';
 // export const defaultMap = '0'.repeat(100);
 export const createGameStage = 'create game';
 export const placementStage = 'placement';

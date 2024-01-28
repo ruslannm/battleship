@@ -9,6 +9,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { UserSigninDto, UserSignupDto } from 'src/user/dto/user.dto';
+import { userRole } from 'src/constants';
 
 @Injectable()
 export class AuthService {
@@ -19,7 +20,8 @@ export class AuthService {
   ) { }
 
   async signup(body: UserSignupDto) {
-    const { role, username, password, passwordConfirm } = body;
+    const { username, password, passwordConfirm } = body;
+    const role = userRole;
     if (password !== passwordConfirm) {
       throw new BadRequestException('isPasswordError');
     }

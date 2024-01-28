@@ -21,7 +21,7 @@ export class UserCreateDto extends UserSigninDto {
   role: string;
 }
 
-export class UserSignupDto extends UserCreateDto {
+export class UserSignupDto extends UserSigninDto {
   @IsString()
   @IsNotEmpty()
   passwordConfirm: string;

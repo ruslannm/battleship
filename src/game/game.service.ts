@@ -159,16 +159,18 @@ export class GameService {
         username: item.username,
       };
     });
-    const bestPlayers = participatedInGames.map((item) => {
-      const userId = item.userId;
-      const username = users.filter((el) => el.id === userId).at(0).username;
-      const amountWin = winInGames
-        .filter((el) => {
-          return el.winnerId === userId;
-        })
-        .at(0)._count.id;
-      return { username, amountWin };
-    });
+    const bestPlayers = participatedInGames
+      .filter((item) => item.userId !== botUserId)
+      .map((item) => {
+        const userId = item.userId;
+        const username = users.filter((el) => el.id === userId).at(0).username;
+        const amountWin = winInGames
+          .filter((el) => {
+            return el.winnerId === userId;
+          })
+          .at(0)._count.id;
+        return { username, amountWin };
+      });
     bestPlayers.sort((a, b) => b.amountWin - a.amountWin);
     return bestPlayers;
   }
