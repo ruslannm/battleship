@@ -7,14 +7,10 @@ import {
   Param,
   ParseIntPipe,
   Post,
-  Put,
-  Render,
   Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
-// import { OrderService } from './game.service';
-// import { OrderDto } from './dto/order.dto';
 import { UserService } from 'src/user/user.service';
 import { Response, Request } from 'express';
 import { AccessJwtGuard } from 'src/auth/access-jwt.guard';
@@ -42,8 +38,6 @@ export class GameController {
   @Get()
   async render(@Req() req: Request, @Res() res: Response) {
     const user = req.user as UserValidatedDto;
-    // const req.cookies['gameId'];
-    console.log(user);
     const opponentId = botUserId;
     const playername = (await this.userService.findById(user.id)).username;
     const opponentname = (await this.userService.findById(opponentId)).username;
@@ -54,7 +48,6 @@ export class GameController {
       data['stage'] = createGameStage;
     } else {
       data['gameId'] = game.id;
-      console.log('Проверить окончание состояния и перевести в следующее');
       data['stage'] = await this.gameService.checkAndUpdateStage(
         game.id,
         user.id,
@@ -92,7 +85,6 @@ export class GameController {
       userType: 'bot',
     };
     data['isStage'] = this.gameService.getGameStage(data['stage']);
-    // console.log('data', data);
     res.render('game', data);
   }
 
@@ -103,16 +95,12 @@ export class GameController {
     @Res() res: Response,
   ): Promise<void> {
     const user = req.user as UserValidatedDto;
-    console.log(user);
-
     const { first_shooter } = dto;
     const game = await this.gameService.findByUserId(user.id);
     if (game) {
-      console.log('есть игра');
       res.redirect(`/`);
       return;
     }
-    console.log('нет игры');
     const opponentId = botUserId;
     const newGame = await this.gameService.create(
       user.id,
@@ -141,13 +129,7 @@ export class GameController {
     @Res() res: Response,
   ): Promise<void> {
     const user = req.user as UserValidatedDto;
-    console.log(dto);
-    // console.log(user.id);
     const game = await this.gameService.findByUserId(user.id);
-    // if (!game) {
-    //   res.render('not-found', { isAuth: true });
-    //   return;
-    // }
     const opponentId = botUserId;
     const isHit = await this.gameService.makeShot(
       { userId: user.id, gameId: game.id, cell: dto.cell },
@@ -158,7 +140,6 @@ export class GameController {
       user.id,
       opponentId,
     );
-    console.log('isHit', isHit, 'isWin', isWin);
     if (!(isHit || isWin)) {
       await this.gameService.makeBotShot(game.id, opponentId, user.id);
     }
@@ -176,8 +157,6 @@ export class GameController {
     id: number,
   ) {
     const user = req.user as UserValidatedDto;
-    // console.log('Delete', user, 'id', id);
-
     const game = await this.gameService.find({ id, userId: user.id });
     if (!game) {
       res.render('not-found', { isAuth: true });

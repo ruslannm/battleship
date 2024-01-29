@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { botUserId, stages } from '../src/constants';
+import { botUserId, stages, userRole } from '../src/constants';
 
 const prisma = new PrismaClient();
 
@@ -13,41 +13,63 @@ type user = {
   role: string;
   username: string;
   password: string;
+  refreshToken: string;
 };
 
-const dataUsers = [...Array(amountUsers - 1).keys()].map((i) => {
+const users: user[] = [...Array(amountUsers - 1).keys()].map((i) => {
   return {
     id: i + 1,
-    role: 'player',
+    role: userRole,
     username: `player-${i + 1}`,
     password: bcrypt.hashSync(`player-${i + 1}`, salt),
+    refreshToken: null,
   };
 });
 
-dataUsers.push({
+users.push({
   id: 0,
   role: 'bot',
   username: 'bot',
   password: 'bot',
+  refreshToken: null,
 });
 
 type game = {
-  userId: number;
-  firstShooterId: number;
+  id: number;
+  stage: string;
   winnerId: number;
 };
+type usersInGame = {
+  userId: number;
+  gameId: number;
+  isFirstShooter: boolean;
+};
+
 const games: game[] = [];
+const usersInGames: usersInGame[] = [];
+let gameId = 1;
 for (let userId = 1; userId < amountUsers; userId++) {
-  for (let i = 0; i < amountGames; i++) {
-    const firstShooterId = Math.random() < 0.5 ? userId : botUserId;
+  for (let i = 0; i < amountGames; i++, gameId++) {
     const winnerId = Math.random() < 0.5 ? userId : botUserId;
     games.push({
-      userId,
-      firstShooterId,
+      id: gameId,
+      stage: stages.at(-1),
       winnerId,
+    });
+    const firstShooterId = Math.random() < 0.5 ? userId : botUserId;
+    usersInGames.push({
+      userId,
+      gameId,
+      isFirstShooter: firstShooterId === userId,
+    });
+    usersInGames.push({
+      userId: botUserId,
+      gameId,
+      isFirstShooter: firstShooterId === botUserId,
     });
   }
 }
+
 type dock = {
   id: number;
   shipLength: number;
@@ -77,61 +99,58 @@ const docks: dock[] = [
   },
 ];
 
-Promise.all([
-  ...dataUsers.map(async (item: user) => {
+users
+  .reduce(async (acc: Promise<user | void>, item) => {
+    await acc;
     const { id, ...data } = item;
-    await prisma.user.upsert({
+    return await prisma.user.upsert({
       where: { id },
       update: data,
       create: item,
     });
-  }),
-])
-  .then(() => {
-    Promise.all([
-      ...docks.map(async (item: dock) => {
-        const { id, ...data } = item;
-        await prisma.dock.upsert({
-          where: { id },
-          update: data,
-          create: item,
-        });
-      }),
-    ]);
-  })
+  }, Promise.resolve())
   .then(async () => {
-    await games.reduce(async (acc: Promise<void>, game) => {
+    return await games.reduce(async (acc: Promise<game | void>, item: game) => {
       await acc;
-      const { userId, firstShooterId, winnerId } = game;
-      await prisma.game.create({
-        data: {
-          users: {
-            create: [
-              {
-                user: { connect: { id: userId } },
-                isFirstShooter: firstShooterId === userId,
-              },
-              {
-                user: { connect: { id: botUserId } },
-                isFirstShooter: firstShooterId === botUserId,
-              },
-            ],
-          },
-          winner: { connect: { id: winnerId } },
-          stage: stages.at(-1),
-        },
+      const { id, ...data } = item;
+      return await prisma.game.upsert({
+        where: { id },
+        update: data,
+        create: item,
       });
     }, Promise.resolve());
   })
-  // .then(async (res) => {
-  //   res;
-  // })
+  .then(async () => {
+    return await usersInGames.reduce(
+      async (acc: Promise<usersInGame | void>, item: usersInGame) => {
+        await acc;
+        return await prisma.usersInGames.upsert({
+          where: {
+            userId_gameId_isFirstShooter: item,
+          },
+          update: {},
+          create: item,
+        });
+      },
+      Promise.resolve(),
+    );
+  })
+  .then(async () => {
+    return await docks.reduce(async (acc: Promise<dock | void>, item: dock) => {
+      await acc;
+      const { id, ...data } = item;
+      return await prisma.dock.upsert({
+        where: { id },
+        update: data,
+        create: item,
+      });
+    }, Promise.resolve());
+  })
   .catch((e) => {
     console.error(e);
     process.exit(1);
   })
   .finally(async () => {
-    console.log(games.at(-1));
     // close Prisma Client at the end
     await prisma.$disconnect();
   });

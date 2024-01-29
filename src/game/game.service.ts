@@ -1,12 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-// import { RuleService } from 'src/rule/rule.service';
-// import {
-//   MapUserStartResetDto,
-//   MapUserStartUpdateDto,
-// } from 'src/placement/dto/placement.dto';
-// import { LogUpdateDto } from './dto/game.dto';
-// import { RuleService } from 'src/rule/rule.service';
 import {
   botUserId,
   closedStage,
@@ -213,16 +206,6 @@ export class GameService {
       data,
     });
   }
-  // async getGameByUserId(userId: number) {
-  //   let game = await this.findByUserId(userId);
-  //   // console.log('getGameByUserId', game);
-
-  //   if (!game) {
-  //     game = await this.create(userId);
-  //     await this.placementService.placeShipsByBot(game.id, 0);
-  //   }
-  //   return game;
-  // }
 
   async update(id: number, data: { stage: string } | { winnerId: number }) {
     try {
@@ -243,12 +226,6 @@ export class GameService {
     });
     const { takenCells: takenCellsOpponets } =
       await this.placementService.getAppliedCells(data.gameId, opponentUserId);
-    console.log(
-      'opponentUserId, takenCellsOpponets, data.cell',
-      opponentUserId,
-      takenCellsOpponets,
-      data.cell,
-    );
     const takenCells = takenCellsOpponets.map((item) => item.cell);
     if (takenCells.includes(data.cell)) {
       return true;
@@ -289,7 +266,6 @@ export class GameService {
           resultShot = false;
         }
       }
-      console.log('BOT cell, resultShot', cell, resultShot);
     } while (resultShot);
     return resultShot;
   }
@@ -492,11 +468,6 @@ export class GameService {
     );
     const ships = this.getShips(stage, userId, takenCells, opponentShots);
     const missingCells = this.getMissingCells(stage, takenCells, opponentShots);
-    console.log(gameId, userId, opponentId, stage);
-    // console.log('takenCells', takenCells);
-    // console.log('spaceAroundCells', spaceAroundCells);
-    console.log(buttons, ships, missingCells);
-
     for (let rowIdx: number = 0; rowIdx < 10; rowIdx++) {
       const row = [];
       for (let columnIdx = 0; columnIdx < 10; columnIdx++) {
@@ -514,9 +485,6 @@ export class GameService {
       }
       result.push({ row, rowNumber: rowIdx + 1 });
     }
-    // console.log(result.at(1).row);
     return result;
-
-    // console.log('takenCells, spaceAroundCells', takenCells, spaceAroundCells);
   }
 }

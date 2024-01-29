@@ -1,12 +1,9 @@
-import { Controller, Get, Render, Req, Res, UseGuards } from '@nestjs/common';
-// import { OrderService } from './order/order.service';
-import { Response, Request } from 'express';
-// import { UserValidatedDto } from 'src/user/dto/user.dto';
+import { Controller, Get, Render, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 import { AccessJwtGuard } from './auth/access-jwt.guard';
 import { AuthService } from './auth/auth.service';
 import { ConfigService } from '@nestjs/config';
 import { UserValidatedDto } from './user/dto/user.dto';
-import { botUserId } from './constants';
 import { GameService } from './game/game.service';
 
 const configService = new ConfigService();
@@ -17,9 +14,7 @@ const { accessCookiesName } = {
 @Controller()
 export class AppController {
   constructor(
-    // private readonly orderService: OrderService,
-    private readonly authService: AuthService, // private readonly gameService: GameService,
-    // private readonly userService: UserService,
+    private readonly authService: AuthService,
     private readonly gameService: GameService,
   ) { }
 
@@ -29,7 +24,6 @@ export class AppController {
   async myStats(@Req() req: Request) {
     const user = req.user as UserValidatedDto;
     const games = await this.gameService.findManyClosedByUserId(user.id);
-    console.log(games.at(-1));
     const renderGames = games.map((item) => {
       const firstShooter = item.users.filter((el) => el.isFirstShooter).at(0)
         .user.username;

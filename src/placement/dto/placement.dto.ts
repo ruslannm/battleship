@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty } from 'class-validator';
 
 export class PlacementDto {
   @IsNotEmpty()
@@ -20,28 +20,3 @@ export class PlaceShipDto {
   shipLength: number;
   shipCells: number[];
 }
-// class RuleDto {
-//   id: number;
-//   quantity: number;
-// }
-
-// export class MapUserStartUpdateDto {
-//   mapUserStart: string;
-//   fleetUser: {
-//     set: RuleDto[];
-//   };
-//   logs: {
-//     create: { description: string };
-//   };
-// }
-
-// export class MapUserStartResetDto {
-//   mapUserStart: string;
-//   fleetUser: {
-//     set: RuleDto[];
-//   };
-//   logs: {
-//     // eslint-disable-next-line @typescript-eslint/ban-types
-//     deleteMany: {};
-//   };
-// }
