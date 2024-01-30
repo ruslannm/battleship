@@ -1,0 +1,40 @@
+div.ship {
+  height: 30px;
+}
+div.ship-4 {
+  width: 120px;
+}
+
+div.ship-3 {
+  width: 90px;
+}
+
+div.ship-2 {
+  width: 60px;
+}
+
+div.ship-1 {
+  width: 30px;
+}
+
+table {
+  position: relative;
+  border-collapse: collapse;
+}
+td {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+td.axis {
+  text-align: center;
+}
+td.cell > div {
+  width: 29.1px;
+  height: 29.1px;
+  padding: 0;
+}
+
+td.missing-cell {
+  text-align: center;
+}

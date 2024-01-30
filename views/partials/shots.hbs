@@ -1,0 +1,19 @@
+<div class='col-10 col-md-6 col-lg-4 col-xl-4 d-flex flex-column'>
+  <div class='card my-3'>
+    <div class='card-body'>
+      <h5 class='card-header'>Выстрелы</h5>
+      <ul class='list-unstyled'>
+        {{#each shots}}
+        <li class="bg-{{this.bgcolor}}"></i> {{this.id}} :
+          {{#if this.isBot}}
+          <i class="bi bi-robot"></i>
+          {{else}}
+          <i class="bi bi-person"></i>
+          {{/if}}
+          {{this.username}} -> {{this.cell}}
+        </li>
+        {{/each}}
+      </ul>
+    </div>
+  </div>
+</div>

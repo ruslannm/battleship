@@ -1,0 +1,39 @@
+<table>
+  <tr>
+    <td class='axis'></td>
+    <td class='axis'>А</td>
+    <td class='axis'>Б</td>
+    <td class='axis'>В</td>
+    <td class='axis'>Г</td>
+    <td class='axis'>Д</td>
+    <td class='axis'>Е</td>
+    <td class='axis'>Ж</td>
+    <td class='axis'>З</td>
+    <td class='axis'>И</td>
+    <td class='axis'>К</td>
+  </tr>
+  {{#each map}}
+  <tr>
+    <td class='axis'>{{this.rowNumber}}</td>
+    {{#each this.row}}
+    {{#if this.isButton}}
+    <td class='cell border border-primary'>
+      <div id="{{../../userType}}-cell-{{this.cell}}" class='{{../../userType}}-btn-cell' value="{{this.cell}}">
+      </div>
+    </td>
+    {{else if this.isGoodShip}}
+    <td class="cell border border-primary shipCell bg-primary">
+    </td>
+    {{else if this.isBadShip}}
+    <td class="cell border border-primary shipCell bg-danger">
+    </td>
+    {{else if this.isMissingCell}}
+    <td class='cell border border-primary missing-cell'>-</td>
+    {{else}}
+    <td class='cell border border-primary'>
+    </td>
+    {{/if}}
+    {{/each}}
+  </tr>
+  {{/each}}
+</table>

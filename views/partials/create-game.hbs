@@ -1,0 +1,23 @@
+<form class='row my-3' id="form-create-game" , action="games" method="post">
+  <div class='row'>
+    <div class='d-flex flex-column my-3'>
+      <div class='form-check'>
+        <input class='form-check-input' type='radio' name='first_shooter' id='player' value='player' required />
+        <label class='form-check-label' for='player'>
+          Первый ход игрока
+        </label>
+      </div>
+      <div class='form-check'>
+        <input class='form-check-input' type='radio' name='first_shooter' id='bot' value='bot' />
+        <label class='form-check-label' for='bot'>
+          Первый ход бота
+        </label>
+      </div>
+    </div>
+  </div>
+  <div class='col-6'>
+    <button id='submit' type='submit' class='btn btn-outline-success mt-2 ms-2'>
+      Создать игру
+    </button>
+  </div>
+</form>
